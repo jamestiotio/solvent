@@ -107,6 +107,8 @@ class SolventGenerateTexture(bpy.types.Operator):
             texture_path=bpy.path.abspath(bpy.context.scene.input_tool.texture_path),
         )
 
+        global BLENDER_CONSOLE_WINDOW_OPENED
+
         if (
             constants.CURRENT_PLATFORM == "Windows"
             and not BLENDER_CONSOLE_WINDOW_OPENED
@@ -252,6 +254,7 @@ class SolventInstallPackages(bpy.types.Operator):
             constants.CURRENT_PLATFORM != "Windows" and not utils.is_admin()
         ):
             try:
+                global BLENDER_CONSOLE_WINDOW_OPENED
                 if (
                     constants.CURRENT_PLATFORM == "Windows"
                     and not BLENDER_CONSOLE_WINDOW_OPENED
@@ -383,8 +386,6 @@ register, unregister = bpy.utils.register_classes_factory(classes)
 
 
 def register() -> None:
-    global REQUIRED_PACKAGES_INSTALLED
-
     if bpy.app.version < bl_info["blender"]:
         current_blender_version = ".".join(str(i) for i in bpy.app.version)
         required_blender_version = ".".join(str(i) for i in bl_info["blender"])
@@ -400,6 +401,7 @@ def register() -> None:
     try:
         for package in constants.REQUIRED_PACKAGES:
             import_module(package)
+        global REQUIRED_PACKAGES_INSTALLED
         REQUIRED_PACKAGES_INSTALLED = True
     except ModuleNotFoundError:
         # Let the user manually installs the necessary packages at this point
