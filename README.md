@@ -9,7 +9,9 @@ Ensure that you already have the following software installed, preferably the la
 - [Git](https://git-scm.com/)
 - [Git LFS](https://git-lfs.github.com/)
 
-Additionally, you would also need to have a [Hugging Face](https://huggingface.co/) account to download the pre-trained Stable Diffusion model checkpoint weights. Optionally, you might want to create a [GitHub](https://github.com/) account as well to raise issues or pull requests to this repository.
+Additionally, you would also need to have a [Hugging Face](https://huggingface.co/) account to download the pre-trained Stable Diffusion model checkpoint weights. You would need to agree to the Terms and Conditions stipulated by the CreativeML Open RAIL-M License [here](https://huggingface.co/CompVis/stable-diffusion-v1-4) before you are able to download their pre-trained model weights.
+
+Optionally, you might want to create a [GitHub](https://github.com/) account as well to raise issues or pull requests to this repository.
 
 ## Instructions
 

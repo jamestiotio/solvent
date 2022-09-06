@@ -52,7 +52,7 @@ def text2image(user_input: constants.UserInput) -> Optional[str]:
         torch_dtype=torch.float16,
     ).to(device)
 
-    # TODO: Enable the following line when this PR is merged and included in a release version: https://github.com/huggingface/diffusers/pull/366
+    # TODO: Enable and uncomment the following line when this PR is merged and included in a release version: https://github.com/huggingface/diffusers/pull/366
     # pipe.enable_attention_slicing()
 
     if texture_tileable:
