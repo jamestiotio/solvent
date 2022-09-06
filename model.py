@@ -56,7 +56,7 @@ def text2image(user_input: constants.UserInput) -> Optional[str]:
     # pipe.enable_attention_slicing()
 
     if texture_tileable:
-        targets = [pipe.vae, pipe.text_encoder, pipe.unet]
+        targets = [pipe.vae, pipe.unet]
         for target in targets:
             for module in target.modules():
                 if isinstance(module, torch.nn.Conv2d):
