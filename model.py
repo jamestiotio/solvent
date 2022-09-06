@@ -30,7 +30,7 @@ def text2image(user_input: constants.UserInput) -> Optional[str]:
     texture_seed = user_input.texture_seed
     model_steps = user_input.model_steps
     model_guidance_scale = user_input.model_guidance_scale
-    texture_tileable: user_input.texture_tileable
+    texture_tileable = user_input.texture_tileable
     model_device = user_input.model_device
     texture_format = user_input.texture_format
     texture_path = user_input.texture_path

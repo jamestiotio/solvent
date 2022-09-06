@@ -105,6 +105,10 @@ class SolventGenerateTexture(bpy.types.Operator):
             texture_path=bpy.path.abspath(bpy.context.scene.input_tool.texture_path),
         )
 
+        if constants.CURRENT_PLATFORM == "Windows":
+            # There is no way to check the current status of the Console Window (open/closed), so we assume that the user has not opened it yet
+            bpy.ops.wm.console_toggle()
+
         from solvent.model import text2image
 
         image_path = text2image(user_input)
