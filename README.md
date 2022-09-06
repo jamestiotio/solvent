@@ -30,15 +30,17 @@ Additionally, you would also need to have a [Hugging Face](https://huggingface.c
 
    Note that the size can be quite large as it includes the pre-trained Stable Diffusion model checkpoint weights. Depending on your Internet speed, you can go get a cup of coffee while waiting.
 
-2. Install the add-on by opening Blender and following the instructions on the official Blender manual [here](https://docs.blender.org/manual/en/latest/editors/preferences/addons.html#installing-add-ons). Follow along the instructions to also enable the add-on.
+2. Zip up the `solvent` folder that has been cloned. This would create a `solvent.zip` file.
 
-3. Since the add-on will need to download and install additional Python packages, you can trigger the installation manually by going to `Edit > Preferences > Add-ons` and click the `Install Python packages` button. Don't worry if Blender seems to hang and not respond for a while. You can monitor the progress of the installation in Blender's Console Window. If you are on Windows, it will be automatically opened when the aforementioned button is pressed. Otherwise, you might need to run Blender from a terminal and view the Console Window output there instead. Depending on your Internet speed, you can go get another cup of coffee while waiting.
+3. Install the add-on by opening Blender and following the instructions on the official Blender manual [here](https://docs.blender.org/manual/en/latest/editors/preferences/addons.html#installing-add-ons). Follow along the instructions to also enable the add-on.
 
-4. Enable the Sidebar (go to `View > Sidebar` or click the `N` key) if it is not enabled yet. You can then go to `Sidebar > Solvent` and input your parameters to generate the texture that you want. After setting the parameters to your heart's content, press the `Generate Texture` button and wait. This might take a while on a CUDA-compatible GPU and even longer on a CPU. Depending on your CPU/GPU's speed and the parameters that you have chosen, you can go get yet another cup of coffee while waiting.
+4. Since the add-on will need to download and install additional Python packages, you can trigger the installation manually by going to `Edit > Preferences > Add-ons` and click the `Install Python packages` button. Don't worry if Blender seems to hang and not respond for a while. You can monitor the progress of the installation in Blender's Console Window. If you are on Windows, it will be automatically opened when the aforementioned button is pressed. Otherwise, you might need to run Blender from a terminal and view the Console Window output there instead. Depending on your Internet speed, you can go get another cup of coffee while waiting.
 
-5. ???
+5. Enable the Sidebar (go to `View > Sidebar` or click the `N` key) if it is not enabled yet. You can then go to `Sidebar > Solvent` and input your parameters to generate the texture that you want. After setting the parameters to your heart's content, press the `Generate Texture` button and wait. This might take a while on a CUDA-compatible GPU and even longer on a CPU. Depending on your CPU/GPU's speed and the parameters that you have chosen, you can go get yet another cup of coffee while waiting.
 
-6. Profit!!!
+6. ???
+
+7. Profit!!!
 
 ## Requirements
 
