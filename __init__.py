@@ -23,6 +23,8 @@ import subprocess
 import tempfile
 from typing import Set
 
+# There is no way to check the current status of the Console Window (open/closed), so we assume that the user has not opened it yet
+BLENDER_CONSOLE_WINDOW_OPENED = False
 REQUIRED_PACKAGES_INSTALLED = False
 RNG = secrets.SystemRandom()
 
@@ -105,9 +107,12 @@ class SolventGenerateTexture(bpy.types.Operator):
             texture_path=bpy.path.abspath(bpy.context.scene.input_tool.texture_path),
         )
 
-        if constants.CURRENT_PLATFORM == "Windows":
-            # There is no way to check the current status of the Console Window (open/closed), so we assume that the user has not opened it yet
+        if (
+            constants.CURRENT_PLATFORM == "Windows"
+            and not BLENDER_CONSOLE_WINDOW_OPENED
+        ):
             bpy.ops.wm.console_toggle()
+            BLENDER_CONSOLE_WINDOW_OPENED = True
 
         from solvent.model import text2image
 
@@ -247,9 +252,12 @@ class SolventInstallPackages(bpy.types.Operator):
             constants.CURRENT_PLATFORM != "Windows" and not utils.is_admin()
         ):
             try:
-                if constants.CURRENT_PLATFORM == "Windows":
-                    # There is no way to check the current status of the Console Window (open/closed), so we assume that the user has not opened it yet
+                if (
+                    constants.CURRENT_PLATFORM == "Windows"
+                    and not BLENDER_CONSOLE_WINDOW_OPENED
+                ):
                     bpy.ops.wm.console_toggle()
+                    BLENDER_CONSOLE_WINDOW_OPENED = True
                 utils.setup()
                 for package in constants.REQUIRED_PACKAGES:
                     spec_output = subprocess.check_output(
