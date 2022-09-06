@@ -35,6 +35,7 @@ class UserInput:
     texture_seed: int
     model_steps: int
     model_guidance_scale: float
+    texture_tileable: bool
     model_device: str
     texture_format: str
     texture_path: str

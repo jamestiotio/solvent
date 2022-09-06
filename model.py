@@ -30,6 +30,7 @@ def text2image(user_input: constants.UserInput) -> Optional[str]:
     texture_seed = user_input.texture_seed
     model_steps = user_input.model_steps
     model_guidance_scale = user_input.model_guidance_scale
+    texture_tileable: user_input.texture_tileable
     model_device = user_input.model_device
     texture_format = user_input.texture_format
     texture_path = user_input.texture_path
@@ -47,10 +48,20 @@ def text2image(user_input: constants.UserInput) -> Optional[str]:
 
     pipe = StableDiffusionPipeline.from_pretrained(
         constants.MODEL_PATH,
-        # TODO: Remove the following two lines when this PR is merged and included in a release version: https://github.com/huggingface/diffusers/pull/366
         revision="fp16",
         torch_dtype=torch.float16,
     ).to(device)
+
+    # Enable the following line when this PR is merged and included in a release version: https://github.com/huggingface/diffusers/pull/366
+    # pipe.enable_attention_slicing()
+
+    if texture_tileable:
+        targets = [pipe.vae, pipe.text_encoder, pipe.unet]
+        for target in targets:
+            for module in target.modules():
+                if isinstance(module, torch.nn.Conv2d):
+                    # Patch to make tileable textures: https://gitlab.com/-/snippets/2395088
+                    module.padding_mode = "circular"
 
     with torch.autocast(device):
         try:

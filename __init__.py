@@ -54,7 +54,11 @@ class SolventUserInput(bpy.types.PropertyGroup):
         min=1,
         description="The adherence to the text prompt and sample quality. Higher values would generate more accurate, but less diverse, textures. A value of 1 would disable classifier-free guidance",
     )
-
+    texture_tileable: bpy.props.BoolProperty(
+        name="Tileable",
+        default=True,
+        description="Whether the generated texture should be tileable or not",
+    )
     # Should use torch.cuda.is_available() to display available options but it requires the PyTorch package to be installed in the first place (cyclic dependency problem)
     model_device: bpy.props.EnumProperty(
         name="Model Device",
@@ -95,6 +99,7 @@ class SolventGenerateTexture(bpy.types.Operator):
             texture_seed=bpy.context.scene.input_tool.texture_seed,
             model_steps=bpy.context.scene.input_tool.model_steps,
             model_guidance_scale=bpy.context.scene.input_tool.model_guidance_scale,
+            texture_tileable=bpy.context.scene.input_tool.texture_tileable,
             model_device=bpy.context.scene.input_tool.model_device,
             texture_format=bpy.context.scene.input_tool.texture_format,
             texture_path=bpy.path.abspath(bpy.context.scene.input_tool.texture_path),
@@ -164,6 +169,9 @@ class SolventMainPanel(bpy.types.Panel):
 
         row = layout.row()
         row.prop(input_tool, "model_guidance_scale")
+
+        row = layout.row()
+        row.prop(input_tool, "texture_tileable")
 
         row = layout.row()
         row.prop(input_tool, "model_device")
