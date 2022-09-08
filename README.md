@@ -40,9 +40,11 @@ Optionally, you might want to create a [GitHub](https://github.com/) account as 
 
 5. Enable the Sidebar (go to `View > Sidebar` or click the `N` key) if it is not enabled yet. You can then go to `Sidebar > Solvent` and input your parameters to generate the texture that you want. After setting the parameters to your heart's content, press the `Generate Texture` button and wait. This might take a while on a CUDA-compatible GPU and even longer on a CPU. Depending on your CPU/GPU's speed and the parameters that you have chosen, you can go get yet another cup of coffee while waiting.
 
-6. ???
+6. If you have selected an object/mesh before generating the texture, the add-on will also attempt to automatically apply the texture to the currently-active material. Otherwise, you can find the texture image in the folder that you have specified and you can apply it to the material yourself.
 
-7. Profit!!!
+7. ???
+
+8. Profit!!!
 
 ## Requirements
 
