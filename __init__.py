@@ -36,8 +36,14 @@ def import_module(package: constants.Package) -> None:
 
 
 class SolventUserInput(bpy.types.PropertyGroup):
-    texture_name: bpy.props.StringProperty(name="Texture Name")
-    texture_prompt: bpy.props.StringProperty(name="Texture Prompt")
+    texture_name: bpy.props.StringProperty(
+        name="Texture Name",
+        description="Name of the texture used for the output file",
+    )
+    texture_prompt: bpy.props.StringProperty(
+        name="Texture Prompt",
+        description="Prompt used for the texture",
+    )
     texture_seed: bpy.props.IntProperty(
         name="Texture Seed",
         default=RNG.randint(0, 2**31 - 1),
@@ -61,6 +67,20 @@ class SolventUserInput(bpy.types.PropertyGroup):
         default=True,
         description="Whether the generated texture should be tileable or not",
     )
+    model_attention_slicing: bpy.props.BoolProperty(
+        name="Attention Slicing",
+        default=True,
+        description="Whether to chunk the attention computation or not. Slicing the attention computation would reduce GPU VRAM usage but it would increase the time taken to generate the texture",
+    )
+    model_precision: bpy.props.EnumProperty(
+        name="Model Precision",
+        items=[
+            ("float16", "float16", "16-bit floating point"),
+            ("float32", "float32", "32-bit floating point"),
+        ],
+        default="float16",
+        description="The precision of the PyTorch model. Higher precision might generate higher-quality textures but would require more GPU VRAM",
+    )
     # Should use torch.cuda.is_available() to display available options but it requires the PyTorch package to be installed in the first place (cyclic dependency problem)
     model_device: bpy.props.EnumProperty(
         name="Model Device",
@@ -69,22 +89,23 @@ class SolventUserInput(bpy.types.PropertyGroup):
             ("CPU", "CPU", "Use CPU (generally slower)"),
         ],
         default="GPU",
+        description="The device used by the model to perform the texture generation",
     )
     texture_format: bpy.props.EnumProperty(
         name="Texture Format",
-        description="Select texture file format",
         items=[
             (".png", ".png", "Export texture as a PNG file"),
             (".jpg", ".jpg", "Export texture as a JPG file"),
         ],
         default=".png",
+        description="Select texture file format",
     )
     texture_path: bpy.props.StringProperty(
         name="Texture Path",
-        description="Select path to export texture to",
         subtype="DIR_PATH",
         maxlen=1024,
         default=tempfile.gettempdir(),
+        description="Select path to export texture to",
     )
 
 
@@ -102,6 +123,8 @@ class SolventGenerateTexture(bpy.types.Operator):
             model_steps=bpy.context.scene.input_tool.model_steps,
             model_guidance_scale=bpy.context.scene.input_tool.model_guidance_scale,
             texture_tileable=bpy.context.scene.input_tool.texture_tileable,
+            model_attention_slicing=bpy.context.scene.input_tool.model_attention_slicing,
+            model_precision=bpy.context.scene.input_tool.model_precision,
             model_device=bpy.context.scene.input_tool.model_device,
             texture_format=bpy.context.scene.input_tool.texture_format,
             texture_path=bpy.path.abspath(bpy.context.scene.input_tool.texture_path),
@@ -183,6 +206,12 @@ class SolventMainPanel(bpy.types.Panel):
 
         row = layout.row()
         row.prop(input_tool, "texture_tileable")
+
+        row = layout.row()
+        row.prop(input_tool, "model_attention_slicing")
+
+        row = layout.row()
+        row.prop(input_tool, "model_precision")
 
         row = layout.row()
         row.prop(input_tool, "model_device")

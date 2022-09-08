@@ -31,6 +31,8 @@ def text2image(user_input: constants.UserInput) -> Optional[str]:
     model_steps = user_input.model_steps
     model_guidance_scale = user_input.model_guidance_scale
     texture_tileable = user_input.texture_tileable
+    model_attention_slicing = user_input.model_attention_slicing
+    model_precision = user_input.model_precision
     model_device = user_input.model_device
     texture_format = user_input.texture_format
     texture_path = user_input.texture_path
@@ -48,12 +50,13 @@ def text2image(user_input: constants.UserInput) -> Optional[str]:
 
     pipe = StableDiffusionPipeline.from_pretrained(
         constants.MODEL_PATH,
-        revision="fp16",
-        torch_dtype=torch.float16,
+        revision="fp16" if model_precision == "float16" else "main",
+        torch_dtype=torch.float16 if model_precision == "float16" else torch.float32,
     ).to(device)
 
-    # TODO: Enable and uncomment the following line when this PR is merged and included in a release version: https://github.com/huggingface/diffusers/pull/366
-    # pipe.enable_attention_slicing()
+    # TODO: Enable and uncomment the following lines when this PR is merged and included in a release version: https://github.com/huggingface/diffusers/pull/366
+    # if model_attention_slicing:
+    #     pipe.enable_attention_slicing()
 
     if texture_tileable:
         targets = [pipe.vae, pipe.unet]
