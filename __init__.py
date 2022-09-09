@@ -75,7 +75,7 @@ class SolventUserInput(bpy.types.PropertyGroup):
     model_autocast: bpy.props.BoolProperty(
         name="Autocast",
         default=True,
-        description="Whether to use automatic mixed precision or not. Mixed precision would take a shorter time to generate the texture but it would slightly reduce the quality of the texture. It's highly recommended to keep this enabled.\nIf you use half precision, autocast must be enabled.\nIf you use CPU, you must disable autocast",
+        description="Whether to use automatic mixed precision or not. Mixed precision would take a shorter time to generate the texture but it would slightly reduce the quality of the texture. It's highly recommended to keep this enabled.\n\nIf you use half precision, autocast must be enabled.\n\nIf you use CPU, you must disable autocast",
         update=lambda self, context: callbacks.update_model_autocast(self, context),
     )
     if constants.CURRENT_PLATFORM == "Darwin":
@@ -95,7 +95,7 @@ class SolventUserInput(bpy.types.PropertyGroup):
                 ("Full", "Full", "Full Precision"),
             ],
             default="Half",
-            description="The precision of the PyTorch model. Higher precision might generate higher-quality textures but would require more GPU VRAM. It's highly recommended to use half precision.\nIf you use half precision, autocast must be enabled.\nIf you use CPU, you must use full precision and disable autocast",
+            description="The precision of the PyTorch model. Higher precision might generate higher-quality textures but would require more GPU VRAM. It's highly recommended to use half precision.\n\nIf you use half precision, autocast must be enabled.\n\nIf you use CPU, you must use full precision and disable autocast",
             update=lambda self, context: callbacks.update_model_precision_and_autocast(
                 self, context
             ),
@@ -110,7 +110,7 @@ class SolventUserInput(bpy.types.PropertyGroup):
                 ("CPU", "CPU", "Use CPU (generally slower)"),
             ],
             default="MPS",
-            description="The device used by the model to perform the texture generation.\nIf you use CPU, you must use full precision and disable autocast",
+            description="The device used by the model to perform the texture generation.\n\nIf you use CPU, you must use full precision and disable autocast",
             update=lambda self, context: callbacks.update_model_precision_and_autocast(
                 self, context
             ),
@@ -124,7 +124,7 @@ class SolventUserInput(bpy.types.PropertyGroup):
                 ("CPU", "CPU", "Use CPU (generally slower)"),
             ],
             default="GPU",
-            description="The device used by the model to perform the texture generation.\nIf you use CPU, you must use full precision and disable autocast",
+            description="The device used by the model to perform the texture generation.\n\nIf you use CPU, you must use full precision and disable autocast",
             update=lambda self, context: callbacks.update_model_precision_and_autocast(
                 self, context
             ),
