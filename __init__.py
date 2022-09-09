@@ -167,8 +167,11 @@ class SolventGenerateTexture(bpy.types.Operator):
             self.report(
                 {"INFO"}, "Texture has been applied to the currently active material!"
             )
-        except Exception:
-            self.report({"WARNING"}, f"Failed to apply texture to the material!")
+        except Exception as e:
+            self.report(
+                {"WARNING"},
+                f"Failed to apply texture to the material! Error message: {e}",
+            )
             return {"CANCELLED"}
 
         return {"FINISHED"}
@@ -333,7 +336,8 @@ class SolventInstallPackages(bpy.types.Operator):
 
                 return {"CANCELLED"}
 
-            except Exception:
+            except Exception as e:
+                self.report({"ERROR"}, f"Something went wrong! Error message: {e}")
                 return {"CANCELLED"}
 
             global REQUIRED_PACKAGES_INSTALLED
@@ -435,8 +439,8 @@ def register() -> None:
     except ModuleNotFoundError:
         # Let the user manually installs the necessary packages at this point
         return
-    except Exception:
-        return
+    except Exception as e:
+        raise Exception(f"Something went wrong! Error message: {e}")
 
     for cls in classes:
         bpy.utils.register_class(cls)

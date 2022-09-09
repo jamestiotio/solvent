@@ -74,7 +74,10 @@ def text2image(user_input: constants.UserInput) -> Optional[str]:
                 guidance_scale=model_guidance_scale,
                 generator=generator,
             )["sample"][0]
-        except RuntimeError:
+        except RuntimeError as e:
+            raise RuntimeError(
+                f"The model failed to generate a texture. Error message: {e}"
+            )
             return
 
     image_path = find_unique_filename(

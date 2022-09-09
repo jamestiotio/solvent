@@ -66,7 +66,7 @@ On top of Blender's requirements specified [here](https://www.blender.org/downlo
 - [ ] Provide an option for the user to generate multiple images at once.
 - [ ] Add a dropdown for the user to select different schedulers.
 - [ ] Integrate the `inpaint` and `img2img` Stable Diffusion pipelines into the add-on as well (if the use case makes sense).
-- [ ] Add support to use M1 GPU on Mac once the [relevant PyTorch version](https://pytorch.org/blog/introducing-accelerated-pytorch-training-on-mac/) becomes stable.
+- [ ] Add support to use MPS acceleration on M1 Mac once the [relevant PyTorch version](https://pytorch.org/blog/introducing-accelerated-pytorch-training-on-mac/) becomes stable.
 - [ ] Ensure cross-compatibility across Windows, Mac, and Linux.
 - [ ] Check the minimum Blender version that this add-on can support.
 
