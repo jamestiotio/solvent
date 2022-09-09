@@ -89,7 +89,7 @@ def text2image(user_input: constants.UserInput) -> Optional[str]:
     if constants.CURRENT_PLATFORM == "Darwin":
         try:
             # TODO: First-time "warmup" pass (https://github.com/huggingface/diffusers/issues/372)
-            _ = pipe(prompt, num_inference_steps=1)
+            _ = pipe(texture_prompt, num_inference_steps=1)
             image = pipe(
                 prompt=texture_prompt,
                 num_inference_steps=model_steps,
