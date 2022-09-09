@@ -27,7 +27,6 @@ from typing import Set
 # There is no way to check the current status of the Console Window (open/closed), so we assume that the user has not opened it yet
 BLENDER_CONSOLE_WINDOW_OPENED = False
 REQUIRED_PACKAGES_INSTALLED = False
-RNG = secrets.SystemRandom()
 
 
 def import_module(package: constants.Package) -> None:
@@ -47,7 +46,7 @@ class SolventUserInput(bpy.types.PropertyGroup):
     )
     texture_seed: bpy.props.IntProperty(
         name="Texture Seed",
-        default=RNG.randint(0, 2**31 - 1),
+        default=secrets.choice(range(2**31)),
         min=0,
         description="The seed used by the PyTorch generator",
     )
@@ -76,7 +75,7 @@ class SolventUserInput(bpy.types.PropertyGroup):
     model_autocast: bpy.props.BoolProperty(
         name="Autocast",
         default=True,
-        description="Whether to use automatic mixed precision or not. Mixed precision would take a shorter time to generate the texture but it would slightly reduce the quality of the texture. It's highly recommended to keep this enabled.\nIf you use half precision, autocast must be enabled",
+        description="Whether to use automatic mixed precision or not. Mixed precision would take a shorter time to generate the texture but it would slightly reduce the quality of the texture. It's highly recommended to keep this enabled.\nIf you use half precision, autocast must be enabled.\nIf you use CPU, you must disable autocast",
         update=lambda self, context: callbacks.update_model_autocast(self, context),
     )
     if constants.CURRENT_PLATFORM == "Darwin":
