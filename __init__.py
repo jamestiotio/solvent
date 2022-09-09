@@ -75,7 +75,7 @@ class SolventUserInput(bpy.types.PropertyGroup):
     model_autocast: bpy.props.BoolProperty(
         name="Autocast",
         default=True,
-        description="Whether to use automatic mixed precision or not. Mixed precision would take a shorter time to generate the texture but it would slightly reduce the quality of the texture",
+        description="Whether to use automatic mixed precision or not. Mixed precision would take a shorter time to generate the texture but it would slightly reduce the quality of the texture. It's highly recommended to keep this enabled",
     )
     if constants.CURRENT_PLATFORM == "Darwin":
         model_precision: bpy.props.EnumProperty(

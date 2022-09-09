@@ -51,20 +51,21 @@ def text2image(user_input: constants.UserInput) -> Optional[str]:
 
     generator = torch.Generator(device).manual_seed(texture_seed)
 
-    if constants.CURRENT_PLATFORM == "Darwin":
+    if (
+        constants.CURRENT_PLATFORM != "Darwin"
+        and model_precision == "float16"
+        and model_autocast
+    ):
         pipe = StableDiffusionPipeline.from_pretrained(
-            constants.MODEL_PATH,
+            constants.MODEL_PATH, revision="fp16", torch_dtype=torch.float16
         ).to(device)
     else:
         pipe = StableDiffusionPipeline.from_pretrained(
             constants.MODEL_PATH,
-            revision="fp16" if model_precision == "float16" else "main",
-            torch_dtype=torch.float16
-            if model_precision == "float16"
-            else torch.float32,
         ).to(device)
 
-    if model_attention_slicing and model_precision == "float16":
+    # TODO: Should this be disabled when model_precision != "float16"?
+    if model_attention_slicing:
         pipe.enable_attention_slicing()
 
     if texture_tileable:
