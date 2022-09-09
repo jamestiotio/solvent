@@ -24,7 +24,7 @@ ENVIRONMENT_VARIABLES["PYTHONNOUSERSITE"] = "1"
 @dataclass
 class Package:
     name: str
-    version: str
+    version: Optional[str] = None
     extra_args: Optional[List[str]] = None
 
 
@@ -47,7 +47,17 @@ class UserInput:
 PIP = Package(name="pip", version="22.2.2")
 REQUIRED_PACKAGES = []
 if CURRENT_PLATFORM == "Darwin":
-    REQUIRED_PACKAGES.append(Package(name="torch", version="1.12.1"))
+    REQUIRED_PACKAGES.append(
+        # TODO: Update to stable version of PyTorch once it supports MPS
+        Package(
+            name="torch",
+            extra_args=[
+                "--pre",
+                "-f",
+                "https://download.pytorch.org/whl/nightly/torch/",
+            ],
+        )
+    )
 else:
     REQUIRED_PACKAGES.append(
         Package(
@@ -59,7 +69,7 @@ else:
             ],
         )
     )
-REQUIRED_PACKAGES.append(Package(name="diffusers", version="0.2.4"))
+REQUIRED_PACKAGES.append(Package(name="diffusers", version="0.3.0"))
 REQUIRED_PACKAGES.append(Package(name="transformers", version="4.21.3"))
 REQUIRED_PACKAGES = tuple(REQUIRED_PACKAGES)
 OPTIONAL_PACKAGES = (

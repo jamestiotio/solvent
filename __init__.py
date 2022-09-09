@@ -72,25 +72,47 @@ class SolventUserInput(bpy.types.PropertyGroup):
         default=True,
         description="Whether to chunk the attention computation or not. Slicing the attention computation would reduce GPU VRAM usage but it would increase the time taken to generate the texture",
     )
-    model_precision: bpy.props.EnumProperty(
-        name="Model Precision",
-        items=[
-            ("float16", "float16", "16-bit floating point"),
-            ("float32", "float32", "32-bit floating point"),
-        ],
-        default="float16",
-        description="The precision of the PyTorch model. Higher precision might generate higher-quality textures but would require more GPU VRAM",
-    )
-    # Should use torch.cuda.is_available() to display available options but it requires the PyTorch package to be installed in the first place (cyclic dependency problem)
-    model_device: bpy.props.EnumProperty(
-        name="Model Device",
-        items=[
-            ("GPU", "GPU", "Use GPU (generally faster)"),
-            ("CPU", "CPU", "Use CPU (generally slower)"),
-        ],
-        default="GPU",
-        description="The device used by the model to perform the texture generation",
-    )
+    if constants.CURRENT_PLATFORM == "Darwin":
+        model_precision: bpy.props.EnumProperty(
+            name="Model Precision",
+            items=[
+                ("float32", "float32", "32-bit floating point"),
+            ],
+            default="float32",
+            description="The precision of the PyTorch model. Higher precision might generate higher-quality textures but would require more GPU VRAM",
+        )
+    else:
+        model_precision: bpy.props.EnumProperty(
+            name="Model Precision",
+            items=[
+                ("float16", "float16", "16-bit floating point"),
+                ("float32", "float32", "32-bit floating point"),
+            ],
+            default="float16",
+            description="The precision of the PyTorch model. Higher precision might generate higher-quality textures but would require more GPU VRAM",
+        )
+    if constants.CURRENT_PLATFORM == "Darwin":
+        # Assume that the user uses an M1 Mac
+        model_device: bpy.props.EnumProperty(
+            name="Model Device",
+            items=[
+                ("MPS", "MPS", "Use Apple's MPS (generally faster)"),
+                ("CPU", "CPU", "Use CPU (generally slower)"),
+            ],
+            default="MPS",
+            description="The device used by the model to perform the texture generation",
+        )
+    else:
+        # Should use torch.cuda.is_available() to display available options but it requires the PyTorch package to be installed in the first place (cyclic dependency problem)
+        model_device: bpy.props.EnumProperty(
+            name="Model Device",
+            items=[
+                ("GPU", "GPU", "Use GPU (generally faster)"),
+                ("CPU", "CPU", "Use CPU (generally slower)"),
+            ],
+            default="GPU",
+            description="The device used by the model to perform the texture generation",
+        )
     texture_format: bpy.props.EnumProperty(
         name="Texture Format",
         items=[

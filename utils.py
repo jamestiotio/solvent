@@ -17,14 +17,24 @@ def is_admin() -> bool:
 
 
 def install(package: constants.Package) -> None:
-    command = [
-        constants.PYTHON_EXECUTABLE_LOCATION,
-        "-m",
-        "pip",
-        "install",
-        "--upgrade",
-        f"{package.name}=={package.version}",
-    ]
+    if package.version is None:
+        command = [
+            constants.PYTHON_EXECUTABLE_LOCATION,
+            "-m",
+            "pip",
+            "install",
+            "--upgrade",
+            package.name,
+        ]
+    else:
+        command = [
+            constants.PYTHON_EXECUTABLE_LOCATION,
+            "-m",
+            "pip",
+            "install",
+            "--upgrade",
+            f"{package.name}=={package.version}",
+        ]
 
     if package.extra_args is not None:
         command.extend(package.extra_args)

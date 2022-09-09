@@ -37,26 +37,34 @@ def text2image(user_input: constants.UserInput) -> Optional[str]:
     texture_format = user_input.texture_format
     texture_path = user_input.texture_path
 
-    device = "cuda" if model_device == "GPU" else "cpu"
-
-    # Overwrite the device value if CUDA is not available
+    # Overwrite the device value if CUDA/MPS is not available
     # This might go against the user's specified settings, but it's better than just throwing an error
-    if not torch.cuda.is_available():
+    if model_device in ["GPU", "MPS"]:
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+    if model_device == "MPS":
+        device = "mps" if torch.backends.mps.is_available() else device
+    if model_device == "CPU":
         device = "cpu"
 
     torch_gc()
 
     generator = torch.Generator(device).manual_seed(texture_seed)
 
-    pipe = StableDiffusionPipeline.from_pretrained(
-        constants.MODEL_PATH,
-        revision="fp16" if model_precision == "float16" else "main",
-        torch_dtype=torch.float16 if model_precision == "float16" else torch.float32,
-    ).to(device)
+    if constants.CURRENT_PLATFORM == "Darwin":
+        pipe = StableDiffusionPipeline.from_pretrained(
+            constants.MODEL_PATH,
+        ).to(device)
+    else:
+        pipe = StableDiffusionPipeline.from_pretrained(
+            constants.MODEL_PATH,
+            revision="fp16" if model_precision == "float16" else "main",
+            torch_dtype=torch.float16
+            if model_precision == "float16"
+            else torch.float32,
+        ).to(device)
 
-    # TODO: Enable and uncomment the following lines when this PR is merged and included in a release version: https://github.com/huggingface/diffusers/pull/366
-    # if model_attention_slicing:
-    #     pipe.enable_attention_slicing()
+    if model_attention_slicing:
+        pipe.enable_attention_slicing()
 
     if texture_tileable:
         targets = [pipe.vae, pipe.unet]
@@ -66,8 +74,10 @@ def text2image(user_input: constants.UserInput) -> Optional[str]:
                     # Patch to make tileable textures: https://gitlab.com/-/snippets/2395088
                     module.padding_mode = "circular"
 
-    with torch.autocast(device):
+    if constants.CURRENT_PLATFORM == "Darwin":
         try:
+            # TODO: First-time "warmup" pass (https://github.com/huggingface/diffusers/issues/372)
+            _ = pipe(prompt, num_inference_steps=1)
             image = pipe(
                 prompt=texture_prompt,
                 num_inference_steps=model_steps,
@@ -79,6 +89,21 @@ def text2image(user_input: constants.UserInput) -> Optional[str]:
                 f"The model failed to generate a texture. Error message: {e}"
             )
             return
+
+    else:
+        with torch.autocast(device):
+            try:
+                image = pipe(
+                    prompt=texture_prompt,
+                    num_inference_steps=model_steps,
+                    guidance_scale=model_guidance_scale,
+                    generator=generator,
+                )["sample"][0]
+            except RuntimeError as e:
+                raise RuntimeError(
+                    f"The model failed to generate a texture. Error message: {e}"
+                )
+                return
 
     image_path = find_unique_filename(
         os.path.join(texture_path, texture_name) + texture_format
