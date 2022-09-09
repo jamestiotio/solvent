@@ -32,6 +32,7 @@ def text2image(user_input: constants.UserInput) -> Optional[str]:
     model_guidance_scale = user_input.model_guidance_scale
     texture_tileable = user_input.texture_tileable
     model_attention_slicing = user_input.model_attention_slicing
+    model_autocast = user_input.model_autocast
     model_precision = user_input.model_precision
     model_device = user_input.model_device
     texture_format = user_input.texture_format
@@ -63,7 +64,7 @@ def text2image(user_input: constants.UserInput) -> Optional[str]:
             else torch.float32,
         ).to(device)
 
-    if model_attention_slicing:
+    if model_attention_slicing and model_precision == "float16":
         pipe.enable_attention_slicing()
 
     if texture_tileable:
@@ -91,7 +92,21 @@ def text2image(user_input: constants.UserInput) -> Optional[str]:
             return
 
     else:
-        with torch.autocast(device):
+        if model_autocast:
+            with torch.autocast(device):
+                try:
+                    image = pipe(
+                        prompt=texture_prompt,
+                        num_inference_steps=model_steps,
+                        guidance_scale=model_guidance_scale,
+                        generator=generator,
+                    )["sample"][0]
+                except RuntimeError as e:
+                    raise RuntimeError(
+                        f"The model failed to generate a texture. Error message: {e}"
+                    )
+                    return
+        else:
             try:
                 image = pipe(
                     prompt=texture_prompt,

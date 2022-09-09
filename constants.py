@@ -37,6 +37,7 @@ class UserInput:
     model_guidance_scale: float
     texture_tileable: bool
     model_attention_slicing: bool
+    model_autocast: bool
     model_precision: str
     model_device: str
     texture_format: str

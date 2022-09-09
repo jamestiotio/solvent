@@ -70,7 +70,12 @@ class SolventUserInput(bpy.types.PropertyGroup):
     model_attention_slicing: bpy.props.BoolProperty(
         name="Attention Slicing",
         default=True,
-        description="Whether to chunk the attention computation or not. Slicing the attention computation would reduce GPU VRAM usage but it would increase the time taken to generate the texture",
+        description="Whether to chunk the attention computation or not. Slicing the attention computation would reduce GPU VRAM usage but it would slightly increase the time taken to generate the texture",
+    )
+    model_autocast: bpy.props.BoolProperty(
+        name="Autocast",
+        default=True,
+        description="Whether to use automatic mixed precision or not. Mixed precision would take a shorter time to generate the texture but it would slightly reduce the quality of the texture",
     )
     if constants.CURRENT_PLATFORM == "Darwin":
         model_precision: bpy.props.EnumProperty(
@@ -146,6 +151,7 @@ class SolventGenerateTexture(bpy.types.Operator):
             model_guidance_scale=bpy.context.scene.input_tool.model_guidance_scale,
             texture_tileable=bpy.context.scene.input_tool.texture_tileable,
             model_attention_slicing=bpy.context.scene.input_tool.model_attention_slicing,
+            model_autocast=bpy.context.scene.input_tool.model_autocast,
             model_precision=bpy.context.scene.input_tool.model_precision,
             model_device=bpy.context.scene.input_tool.model_device,
             texture_format=bpy.context.scene.input_tool.texture_format,
@@ -231,9 +237,8 @@ class SolventMainPanel(bpy.types.Panel):
 
         row = layout.row()
         row.prop(input_tool, "texture_tileable")
-
-        row = layout.row()
         row.prop(input_tool, "model_attention_slicing")
+        row.prop(input_tool, "model_autocast")
 
         row = layout.row()
         row.prop(input_tool, "model_precision")
@@ -328,6 +333,12 @@ class SolventInstallPackages(bpy.types.Operator):
                     if spec_output == b"None\n":
                         utils.install(package)
                     import_module(package)
+                    if (
+                        package.version is not None
+                        and hasattr(globals()[package.name], "__version__")
+                        and globals()[package.name].__version__ != package.version
+                    ):
+                        utils.install(package)
             except (subprocess.CalledProcessError, ImportError):
                 pip_install_commands = ""
                 preamble = (
@@ -456,6 +467,16 @@ def register() -> None:
     try:
         for package in constants.REQUIRED_PACKAGES:
             import_module(package)
+
+        # Check currently-imported packages for version compatibility
+        for package in constants.REQUIRED_PACKAGES:
+            if (
+                package.version is not None
+                and hasattr(globals()[package.name], "__version__")
+                and globals()[package.name].__version__ != package.version
+            ):
+                # Let the user manually update the packages at this point
+                return
         global REQUIRED_PACKAGES_INSTALLED
         REQUIRED_PACKAGES_INSTALLED = True
     except ModuleNotFoundError:
