@@ -83,4 +83,6 @@ def text2image(user_input: constants.UserInput) -> Optional[str]:
 
     image.save(image_path)
 
+    torch_gc()
+
     return image_path

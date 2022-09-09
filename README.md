@@ -52,7 +52,7 @@ On top of Blender's requirements specified [here](https://www.blender.org/downlo
 
 - Depending on what your operating system is, around 5-6 GB of space if you use the CPU-only version of PyTorch or around 7-8 GB of space if you use the CUDA GPU version of PyTorch.
 - Around 16 GB of RAM. More is highly recommended.
-- A CUDA-compatible NVIDIA GPU as listed [here](https://developer.nvidia.com/cuda-gpus#compute). This is because PyTorch currently only works with CUDA-compatible NVIDIA GPUs for GPU acceleration. You could try using PyTorch with CPU (which would run more slowly) if you do not have a CUDA-compatible NVIDIA GPU. The GPU should also possess sufficient dedicated GPU memory, preferably 6.5 GB or more. Otherwise, if the GPU possess insufficient dedicated memory, Blender might intermittently and randomly crash.
+- A CUDA-compatible NVIDIA GPU as listed [here](https://developer.nvidia.com/cuda-gpus#compute). This is because PyTorch currently only works with CUDA-compatible NVIDIA GPUs for GPU acceleration. You could try using PyTorch with CPU (which would run more slowly) if you do not have a CUDA-compatible NVIDIA GPU. The GPU should also possess sufficient dedicated GPU memory, preferably 6.5 GB or more. Otherwise, if the GPU possesses insufficient dedicated memory, Blender might intermittently and randomly crash.
 
 ## Known Issues
 
@@ -63,8 +63,10 @@ On top of Blender's requirements specified [here](https://www.blender.org/downlo
 ## TODOs
 
 - [ ] Add image upscaler module.
+- [ ] Provide an option for the user to generate multiple images at once.
 - [ ] Add a dropdown for the user to select different schedulers.
 - [ ] Integrate the `inpaint` and `img2img` Stable Diffusion pipelines into the add-on as well (if the use case makes sense).
+- [ ] Add support to use M1 GPU on Mac once the [relevant PyTorch version](https://pytorch.org/blog/introducing-accelerated-pytorch-training-on-mac/) becomes stable.
 - [ ] Ensure cross-compatibility across Windows, Mac, and Linux.
 - [ ] Check the minimum Blender version that this add-on can support.
 
