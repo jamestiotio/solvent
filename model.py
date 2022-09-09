@@ -103,7 +103,7 @@ def text2image(user_input: constants.UserInput) -> Optional[str]:
             return
 
     else:
-        if model_autocast:
+        if model_autocast and device != "cpu":
             with torch.autocast(device):
                 try:
                     image = pipe(
