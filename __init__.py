@@ -70,7 +70,7 @@ class SolventUserInput(bpy.types.PropertyGroup):
     model_attention_slicing: bpy.props.BoolProperty(
         name="Attention Slicing",
         default=True,
-        description="Whether to chunk the attention computation or not. Slicing the attention computation would reduce GPU VRAM usage but it would slightly increase the time taken to generate the texture",
+        description="Whether to chunk the attention computation or not. Slicing the attention computation would reduce GPU VRAM usage but it would slightly increase the time taken to generate the texture. It's highly recommended to keep this enabled",
     )
     model_autocast: bpy.props.BoolProperty(
         name="Autocast",
@@ -94,7 +94,7 @@ class SolventUserInput(bpy.types.PropertyGroup):
                 ("float32", "float32", "32-bit floating point"),
             ],
             default="float16",
-            description="The precision of the PyTorch model. Higher precision might generate higher-quality textures but would require more GPU VRAM",
+            description="The precision of the PyTorch model. Higher precision might generate higher-quality textures but would require more GPU VRAM. It's highly recommended to use float16",
         )
     if constants.CURRENT_PLATFORM == "Darwin":
         # Assume that the user uses an M1 Mac
