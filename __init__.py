@@ -17,6 +17,7 @@ bl_info = {
 import bpy
 import importlib
 import secrets
+import solvent.callbacks as callbacks
 import solvent.constants as constants
 import solvent.utils as utils
 import subprocess
@@ -75,29 +76,34 @@ class SolventUserInput(bpy.types.PropertyGroup):
     model_autocast: bpy.props.BoolProperty(
         name="Autocast",
         default=True,
-        description="Whether to use automatic mixed precision or not. Mixed precision would take a shorter time to generate the texture but it would slightly reduce the quality of the texture. It's highly recommended to keep this enabled",
+        description="Whether to use automatic mixed precision or not. Mixed precision would take a shorter time to generate the texture but it would slightly reduce the quality of the texture. It's highly recommended to keep this enabled.\nIf you use half precision, autocast must be enabled",
+        update=lambda self, context: callbacks.update_model_autocast(self, context),
     )
     if constants.CURRENT_PLATFORM == "Darwin":
         model_precision: bpy.props.EnumProperty(
             name="Model Precision",
             items=[
-                ("float32", "float32", "32-bit floating point"),
+                ("Full", "Full", "Full Precision"),
             ],
-            default="float32",
+            default="Full",
             description="The precision of the PyTorch model. Higher precision might generate higher-quality textures but would require more GPU VRAM",
         )
     else:
         model_precision: bpy.props.EnumProperty(
             name="Model Precision",
             items=[
-                ("float16", "float16", "16-bit floating point"),
-                ("float32", "float32", "32-bit floating point"),
+                ("Half", "Half", "Half Precision"),
+                ("Full", "Full", "Full Precision"),
             ],
-            default="float16",
-            description="The precision of the PyTorch model. Higher precision might generate higher-quality textures but would require more GPU VRAM. It's highly recommended to use float16",
+            default="Half",
+            description="The precision of the PyTorch model. Higher precision might generate higher-quality textures but would require more GPU VRAM. It's highly recommended to use half precision.\nIf you use half precision, autocast must be enabled.\nIf you use CPU, you must use full precision and disable autocast",
+            update=lambda self, context: callbacks.update_model_precision_and_autocast(
+                self, context
+            ),
         )
     if constants.CURRENT_PLATFORM == "Darwin":
         # Assume that the user uses an M1 Mac
+        # Should use torch.backends.mps.is_available() to display available options but it requires the PyTorch package to be installed in the first place (cyclic dependency problem)
         model_device: bpy.props.EnumProperty(
             name="Model Device",
             items=[
@@ -105,7 +111,10 @@ class SolventUserInput(bpy.types.PropertyGroup):
                 ("CPU", "CPU", "Use CPU (generally slower)"),
             ],
             default="MPS",
-            description="The device used by the model to perform the texture generation",
+            description="The device used by the model to perform the texture generation.\nIf you use CPU, you must use full precision and disable autocast",
+            update=lambda self, context: callbacks.update_model_precision_and_autocast(
+                self, context
+            ),
         )
     else:
         # Should use torch.cuda.is_available() to display available options but it requires the PyTorch package to be installed in the first place (cyclic dependency problem)
@@ -116,7 +125,10 @@ class SolventUserInput(bpy.types.PropertyGroup):
                 ("CPU", "CPU", "Use CPU (generally slower)"),
             ],
             default="GPU",
-            description="The device used by the model to perform the texture generation",
+            description="The device used by the model to perform the texture generation.\nIf you use CPU, you must use full precision and disable autocast",
+            update=lambda self, context: callbacks.update_model_precision_and_autocast(
+                self, context
+            ),
         )
     texture_format: bpy.props.EnumProperty(
         name="Texture Format",
@@ -157,6 +169,14 @@ class SolventGenerateTexture(bpy.types.Operator):
             texture_format=bpy.context.scene.input_tool.texture_format,
             texture_path=bpy.path.abspath(bpy.context.scene.input_tool.texture_path),
         )
+
+        if not user_input.texture_name:
+            self.report({"ERROR"}, "Please specify a texture name.")
+            return {"CANCELLED"}
+
+        if not user_input.texture_prompt:
+            self.report({"ERROR"}, "Please specify a texture prompt.")
+            return {"CANCELLED"}
 
         global BLENDER_CONSOLE_WINDOW_OPENED
 

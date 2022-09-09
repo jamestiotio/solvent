@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 
 from diffusers import StableDiffusionPipeline
+import gc
 import os
 import solvent.constants as constants
 from typing import Optional
@@ -8,6 +9,7 @@ import torch
 
 
 def torch_gc():
+    gc.collect()
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
         torch.cuda.ipc_collect()
@@ -53,18 +55,26 @@ def text2image(user_input: constants.UserInput) -> Optional[str]:
 
     if (
         constants.CURRENT_PLATFORM != "Darwin"
-        and model_precision == "float16"
+        and model_precision == "Half"
         and model_autocast
+        and device != "cpu"
     ):
         pipe = StableDiffusionPipeline.from_pretrained(
-            constants.MODEL_PATH, revision="fp16", torch_dtype=torch.float16
+            constants.MODEL_PATH,
+            local_files_only=True,
+            use_auth_token=False,
+            revision="fp16",
+            torch_dtype=torch.float16,
         ).to(device)
     else:
         pipe = StableDiffusionPipeline.from_pretrained(
             constants.MODEL_PATH,
+            local_files_only=True,
+            use_auth_token=False,
         ).to(device)
 
-    # TODO: Should this be disabled when model_precision != "float16"?
+    pipe.set_progress_bar_config(disable=False)
+
     if model_attention_slicing:
         pipe.enable_attention_slicing()
 
