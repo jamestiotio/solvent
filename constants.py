@@ -10,7 +10,7 @@ from typing import Optional, List
 CURRENT_PLATFORM = platform.system()
 CURRENT_SD_VERSION = "1.4"
 PYTHON_EXECUTABLE_LOCATION = str(sys.executable)
-STABLE_DIFFUSION_DIRECTORY_NAME = "stable-diffusion-v1-4"
+STABLE_DIFFUSION_DIRECTORY_NAME = "models/stable-diffusion-v1-4"
 MODEL_PATH = os.path.join(
     bpy.utils.user_resource("SCRIPTS"),
     "addons",

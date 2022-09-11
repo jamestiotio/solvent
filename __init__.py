@@ -227,9 +227,9 @@ class SolventGenerateTexture(bpy.types.Operator):
         return context.window_manager.invoke_confirm(self, event)
 
 
-class SolventMainPanel(bpy.types.Panel):
-    bl_label = "Solvent"
-    bl_idname = "SOLVENT_PT_Main"
+class SolventTexturePanel(bpy.types.Panel):
+    bl_label = "Texture Generation"
+    bl_idname = "SOLVENT_PT_Texture"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
     bl_category = "Solvent"
@@ -463,7 +463,7 @@ preparation_classes = (
 classes = (
     SolventUserInput,
     SolventGenerateTexture,
-    SolventMainPanel,
+    SolventTexturePanel,
     SolventAboutPanel,
 )
 
