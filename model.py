@@ -1,11 +1,26 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 
-from diffusers import StableDiffusionPipeline
+from diffusers import (
+    StableDiffusionPipeline,
+    DDIMScheduler,
+    LMSDiscreteScheduler,
+    PNDMScheduler,
+)
 import gc
 import os
 import solvent.constants as constants
 from typing import Optional
 import torch
+
+ddim_scheduler = DDIMScheduler(
+    beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear"
+)
+lms_scheduler = LMSDiscreteScheduler(
+    beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear"
+)
+pndm_scheduler = PNDMScheduler(
+    beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear"
+)
 
 
 def torch_gc():
@@ -37,6 +52,7 @@ def text2image(user_input: constants.UserInput) -> Optional[str]:
     model_autocast = user_input.model_autocast
     model_precision = user_input.model_precision
     model_device = user_input.model_device
+    model_scheduler = user_input.model_scheduler
     texture_format = user_input.texture_format
     texture_path = user_input.texture_path
 
@@ -48,6 +64,14 @@ def text2image(user_input: constants.UserInput) -> Optional[str]:
         device = "mps" if torch.backends.mps.is_available() else device
     if model_device == "CPU":
         device = "cpu"
+
+    elif model_scheduler == "DDIM":
+        scheduler = ddim_scheduler
+    elif model_scheduler == "K-LMS":
+        scheduler = lms_scheduler
+    else:
+        # By default, use the PNDM scheduler
+        scheduler = pndm_scheduler
 
     torch_gc()
 
@@ -65,12 +89,14 @@ def text2image(user_input: constants.UserInput) -> Optional[str]:
             use_auth_token=False,
             revision="fp16",
             torch_dtype=torch.float16,
+            scheduler=scheduler,
         ).to(device)
     else:
         pipe = StableDiffusionPipeline.from_pretrained(
             constants.MODEL_PATH,
             local_files_only=True,
             use_auth_token=False,
+            scheduler=scheduler,
         ).to(device)
 
     pipe.set_progress_bar_config(disable=False)

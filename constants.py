@@ -40,6 +40,7 @@ class UserInput:
     model_autocast: bool
     model_precision: str
     model_device: str
+    model_scheduler: str
     texture_format: str
     texture_path: str
 
@@ -72,6 +73,7 @@ else:
     )
 REQUIRED_PACKAGES.append(Package(name="diffusers", version="0.3.0"))
 REQUIRED_PACKAGES.append(Package(name="transformers", version="4.21.3"))
+REQUIRED_PACKAGES.append(Package(name="scipy", version="1.9.1"))
 REQUIRED_PACKAGES = tuple(REQUIRED_PACKAGES)
 OPTIONAL_PACKAGES = (
     Package(name="ftfy", version="6.1.1"),

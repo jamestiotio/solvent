@@ -16,6 +16,7 @@ bl_info = {
 
 import bpy
 import importlib
+import os
 import secrets
 import solvent.callbacks as callbacks
 import solvent.constants as constants
@@ -129,6 +130,16 @@ class SolventUserInput(bpy.types.PropertyGroup):
                 self, context
             ),
         )
+    model_scheduler: bpy.props.EnumProperty(
+        name="Model Scheduler",
+        items=[
+            ("DDIM", "DDIM", "Use DDIM Scheduler"),
+            ("K-LMS", "K-LMS", "Use K-LMS Scheduler"),
+            ("PNDM", "PNDM", "Use PNDM Scheduler"),
+        ],
+        default="PNDM",
+        description="The scheduler used by the model to perform the texture generation. K-LMS would provide a good balance between quality and speed, while DDIM is generally faster",
+    )
     texture_format: bpy.props.EnumProperty(
         name="Texture Format",
         items=[
@@ -165,6 +176,7 @@ class SolventGenerateTexture(bpy.types.Operator):
             model_autocast=bpy.context.scene.input_tool.model_autocast,
             model_precision=bpy.context.scene.input_tool.model_precision,
             model_device=bpy.context.scene.input_tool.model_device,
+            model_scheduler=bpy.context.scene.input_tool.model_scheduler,
             texture_format=bpy.context.scene.input_tool.texture_format,
             texture_path=bpy.path.abspath(bpy.context.scene.input_tool.texture_path),
         )
@@ -185,6 +197,8 @@ class SolventGenerateTexture(bpy.types.Operator):
         ):
             bpy.ops.wm.console_toggle()
             BLENDER_CONSOLE_WINDOW_OPENED = True
+
+        os.environ["PYTORCH_ENABLE_MPS_FALLBACK"] = "1"
 
         from solvent.model import text2image
 
@@ -264,6 +278,9 @@ class SolventTexturePanel(bpy.types.Panel):
 
         row = layout.row()
         row.prop(input_tool, "model_device")
+
+        row = layout.row()
+        row.prop(input_tool, "model_scheduler")
 
         row = layout.row()
         row.prop(input_tool, "texture_format")
@@ -349,7 +366,7 @@ class SolventInstallPackages(bpy.types.Operator):
                         ],
                         env=constants.ENVIRONMENT_VARIABLES,
                     )
-                    if spec_output == b"None\n":
+                    if spec_output in [b"None\n", b"None\r\n"]:
                         utils.install(package)
                     import_module(package)
                     if (
@@ -436,11 +453,13 @@ class SolventWarningPanel(bpy.types.Panel):
             f"    under the {bl_info.get('support').title()} tab and enable it.",
             f'3. Under "Preferences", click on the "{SolventInstallPackages.bl_label}"',
             f"    button. This will download and install the required packages,",
-            f"    if Blender has the required permissions. If you are experiencing issues:",
+            f"    if Blender has the required permissions.",
+            f"4. After the installation has finished, you would need to restart Blender.",
+            f"",
+            f"If you are experiencing issues:",
             f"1. If you are on Windows, re-open Blender with administrator privileges.",
-            f"2. Otherwise, try installing Blender from Blender's official site",
-            f"    (https://www.blender.org/download/) and extract it to a",
-            f"    directory that you own the permissions to access.",
+            f"2. Otherwise, try installing Blender from Blender's official site and",
+            f"    extract it to a directory that you own the permissions to access.",
         ]
 
         for line in lines:
