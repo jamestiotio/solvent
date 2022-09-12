@@ -90,6 +90,7 @@ Furthermore, this project also depends on the saved checkpoint weights of the fo
 | Model | License |
 |:-------:|:--------------------:|
 | [Stable Diffusion v1-4](https://huggingface.co/CompVis/stable-diffusion-v1-4) | [CreativeML Open RAIL-M License](https://huggingface.co/spaces/CompVis/stable-diffusion-license) |
+
 Any generated texture images are subject to the Creative Commons CC0 1.0 Universal Public Domain Dedication License specified [here](https://creativecommons.org/publicdomain/zero/1.0/legalcode).
 
 Use of this add-on implies that you agree with all of the terms and conditions mentioned in all of the relevant licenses, which would include whichever model(s) you used to produce the image outputs.
