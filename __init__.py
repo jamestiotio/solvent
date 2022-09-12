@@ -166,7 +166,8 @@ class SolventUserInput(bpy.types.PropertyGroup):
     batching: bpy.props.BoolProperty(
         name="Batching",
         default=False,
-        description="Whether to batch the texture generation or not. Batching would reduce the time taken to generate multiple textures but it would increase the GPU VRAM required. It's highly recommended to keep this disabled due to limited memory constraints in consumer-grade hardware",
+        description="Whether to batch the texture generation or not. Batching would reduce the time taken to generate multiple textures but it would increase the GPU VRAM required. It's highly recommended to keep this disabled due to limited memory constraints in consumer-grade hardware.\n\nIf you use an M1 Mac, you must disable batching",
+        update=lambda self, context: callbacks.update_batching(self, context),
     )
 
 

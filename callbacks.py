@@ -2,6 +2,7 @@
 
 
 import bpy
+import solvent.constants as constants
 
 
 def update_model_autocast(self, context) -> None:
@@ -31,3 +32,9 @@ def update_model_precision(self, context) -> None:
 def update_model_precision_and_autocast(self, context) -> None:
     update_model_precision(self, context)
     update_model_autocast(self, context)
+
+
+def update_batching(self, context) -> None:
+    # Batching is not reliable on Apple MPS: https://github.com/huggingface/diffusers/issues/363
+    if bpy.context.scene.input_tool.batching and constants.CURRENT_PLATFORM == "Darwin":
+        bpy.context.scene.input_tool.batching = False
