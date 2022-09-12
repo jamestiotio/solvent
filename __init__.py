@@ -2,7 +2,7 @@
 
 bl_info = {
     "name": "Solvent",
-    "description": "Texture Generation Using Stable Diffusion Model in Blender",
+    "description": "AI-Assisted Texture Generation in Blender",
     "author": "James Raphael Tiovalen",
     "version": (0, 0, 1),
     "blender": (3, 0, 0),
@@ -156,6 +156,18 @@ class SolventUserInput(bpy.types.PropertyGroup):
         default=tempfile.gettempdir(),
         description="Select path to export texture to",
     )
+    num_of_images: bpy.props.IntProperty(
+        name="Number of Images",
+        default=1,
+        min=1,
+        max=4,
+        description="The number of texture images to generate. If batching is disabled, more textures generated would increase the time taken to generate all of the textures. Otherwise, more textures generated would increase the GPU VRAM required",
+    )
+    batching: bpy.props.BoolProperty(
+        name="Batching",
+        default=False,
+        description="Whether to batch the texture generation or not. Batching would reduce the time taken to generate multiple textures but it would increase the GPU VRAM required. It's highly recommended to keep this disabled due to limited memory constraints in consumer-grade hardware",
+    )
 
 
 class SolventGenerateTexture(bpy.types.Operator):
@@ -179,6 +191,8 @@ class SolventGenerateTexture(bpy.types.Operator):
             model_scheduler=bpy.context.scene.input_tool.model_scheduler,
             texture_format=bpy.context.scene.input_tool.texture_format,
             texture_path=bpy.path.abspath(bpy.context.scene.input_tool.texture_path),
+            num_of_images=bpy.context.scene.input_tool.num_of_images,
+            batching=bpy.context.scene.input_tool.batching,
         )
 
         if not user_input.texture_name:
@@ -202,20 +216,35 @@ class SolventGenerateTexture(bpy.types.Operator):
 
         from solvent.model import text2image
 
-        image_path = text2image(user_input)
+        try:
+            image_paths = text2image(user_input)
+        except Exception as e:
+            self.report({"ERROR"}, f"Something went wrong! Error message: {e}")
+            return {"CANCELLED"}
 
-        if image_path is None:
+        if not image_paths:
             self.report({"ERROR"}, "Texture generation failed!")
             return {"CANCELLED"}
 
-        self.report(
-            {"INFO"},
-            f"Texture has been generated successfully! Texture image is located at: {image_path}",
-        )
+        if len(image_paths) == 1:
+            self.report(
+                {"INFO"},
+                f"Texture has been generated successfully! Texture image is located at: {image_paths[0]}",
+            )
+        else:
+            self.report(
+                {"INFO"},
+                f"Textures have been generated successfully!",
+            )
 
         try:
+            for idx, image_path in enumerate(image_paths):
+                if idx == 0:
+                    texture_image = bpy.data.images.load(image_path)
+                else:
+                    bpy.data.images.load(image_path)
+
             material = bpy.context.active_object.material_slots[0].material
-            texture_image = bpy.data.images.load(image_path)
             material.use_nodes = True
             material_output = material.node_tree.nodes.get("Material Output")
             principled_bsdf = material.node_tree.nodes.get("Principled BSDF")
@@ -225,15 +254,21 @@ class SolventGenerateTexture(bpy.types.Operator):
                 texture_node.outputs[0], principled_bsdf.inputs[0]
             )
 
-            self.report(
-                {"INFO"}, "Texture has been applied to the currently active material!"
-            )
+            if len(image_paths) == 1:
+                self.report(
+                    {"INFO"},
+                    "Texture has been applied to the currently active material!",
+                )
+            else:
+                self.report(
+                    {"INFO"},
+                    "The first texture has been applied to the currently active material!",
+                )
         except Exception as e:
             self.report(
                 {"WARNING"},
                 f"Failed to apply texture to the material! Error message: {e}",
             )
-            return {"CANCELLED"}
 
         return {"FINISHED"}
 
@@ -287,6 +322,12 @@ class SolventTexturePanel(bpy.types.Panel):
 
         row = layout.row()
         row.prop(input_tool, "texture_path")
+
+        row = layout.row()
+        row.prop(input_tool, "num_of_images")
+
+        row = layout.row()
+        row.prop(input_tool, "batching")
 
         layout.separator()
 

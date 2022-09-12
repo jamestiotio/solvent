@@ -43,6 +43,8 @@ class UserInput:
     model_scheduler: str
     texture_format: str
     texture_path: str
+    num_of_images: int
+    batching: bool
 
 
 # This is our version of requirements.txt

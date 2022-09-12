@@ -9,7 +9,7 @@ from diffusers import (
 import gc
 import os
 import solvent.constants as constants
-from typing import Optional
+from typing import Optional, List
 import torch
 
 ddim_scheduler = DDIMScheduler(
@@ -41,7 +41,7 @@ def find_unique_filename(path: str) -> str:
     return path
 
 
-def text2image(user_input: constants.UserInput) -> Optional[str]:
+def text2image(user_input: constants.UserInput) -> Optional[List]:
     texture_name = user_input.texture_name
     texture_prompt = user_input.texture_prompt
     texture_seed = user_input.texture_seed
@@ -55,6 +55,11 @@ def text2image(user_input: constants.UserInput) -> Optional[str]:
     model_scheduler = user_input.model_scheduler
     texture_format = user_input.texture_format
     texture_path = user_input.texture_path
+    num_of_images = user_input.num_of_images
+    batching = user_input.batching
+
+    if batching:
+        texture_prompt = [texture_prompt] * num_of_images
 
     # Overwrite the device value if CUDA/MPS is not available
     # This might go against the user's specified settings, but it's better than just throwing an error
@@ -112,57 +117,97 @@ def text2image(user_input: constants.UserInput) -> Optional[str]:
                     # Patch to make tileable textures: https://gitlab.com/-/snippets/2395088
                     module.padding_mode = "circular"
 
+    images = []
+
     if constants.CURRENT_PLATFORM == "Darwin":
         try:
-            # TODO: First-time "warmup" pass (https://github.com/huggingface/diffusers/issues/372)
-            _ = pipe(texture_prompt, num_inference_steps=1)
-            image = pipe(
-                prompt=texture_prompt,
-                num_inference_steps=model_steps,
-                guidance_scale=model_guidance_scale,
-                generator=generator,
-            )["sample"][0]
-        except RuntimeError as e:
-            raise RuntimeError(
-                f"The model failed to generate a texture. Error message: {e}"
-            )
-            return
-
-    else:
-        if model_autocast and device != "cpu":
-            with torch.autocast(device):
-                try:
+            if batching:
+                # TODO: First-time "warmup" pass (https://github.com/huggingface/diffusers/issues/372)
+                _ = pipe(texture_prompt, num_inference_steps=1)
+                images = pipe(
+                    prompt=texture_prompt,
+                    num_inference_steps=model_steps,
+                    guidance_scale=model_guidance_scale,
+                    generator=generator,
+                ).images
+            else:
+                for _ in range(num_of_images):
+                    # TODO: First-time "warmup" pass (https://github.com/huggingface/diffusers/issues/372)
+                    _ = pipe(texture_prompt, num_inference_steps=1)
                     image = pipe(
                         prompt=texture_prompt,
                         num_inference_steps=model_steps,
                         guidance_scale=model_guidance_scale,
                         generator=generator,
                     )["sample"][0]
-                except RuntimeError as e:
-                    raise RuntimeError(
-                        f"The model failed to generate a texture. Error message: {e}"
-                    )
-                    return
+                    images.append(image)
+        except RuntimeError as e:
+            raise RuntimeError(
+                f"The model failed to generate a texture. Error message: {e}"
+            )
+
+    else:
+        if model_autocast and device != "cpu":
+            if batching:
+                with torch.autocast(device):
+                    try:
+                        images = pipe(
+                            prompt=texture_prompt,
+                            num_inference_steps=model_steps,
+                            guidance_scale=model_guidance_scale,
+                            generator=generator,
+                        ).images
+                    except RuntimeError as e:
+                        raise RuntimeError(
+                            f"The model failed to generate a texture. Error message: {e}"
+                        )
+            else:
+                for _ in range(num_of_images):
+                    with torch.autocast(device):
+                        try:
+                            image = pipe(
+                                prompt=texture_prompt,
+                                num_inference_steps=model_steps,
+                                guidance_scale=model_guidance_scale,
+                                generator=generator,
+                            )["sample"][0]
+                            images.append(image)
+                        except RuntimeError as e:
+                            raise RuntimeError(
+                                f"The model failed to generate a texture. Error message: {e}"
+                            )
         else:
             try:
-                image = pipe(
-                    prompt=texture_prompt,
-                    num_inference_steps=model_steps,
-                    guidance_scale=model_guidance_scale,
-                    generator=generator,
-                )["sample"][0]
+                if batching:
+                    images = pipe(
+                        prompt=texture_prompt,
+                        num_inference_steps=model_steps,
+                        guidance_scale=model_guidance_scale,
+                        generator=generator,
+                    ).images
+                else:
+                    for _ in range(num_of_images):
+                        image = pipe(
+                            prompt=texture_prompt,
+                            num_inference_steps=model_steps,
+                            guidance_scale=model_guidance_scale,
+                            generator=generator,
+                        )["sample"][0]
+                        images.append(image)
             except RuntimeError as e:
                 raise RuntimeError(
                     f"The model failed to generate a texture. Error message: {e}"
                 )
-                return
 
-    image_path = find_unique_filename(
-        os.path.join(texture_path, texture_name) + texture_format
-    )
+    image_paths = []
 
-    image.save(image_path)
+    for image in images:
+        image_path = find_unique_filename(
+            os.path.join(texture_path, texture_name) + texture_format
+        )
+        image.save(image_path)
+        image_paths.append(image_path)
 
     torch_gc()
 
-    return image_path
+    return image_paths

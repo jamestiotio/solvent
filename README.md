@@ -62,7 +62,6 @@ On top of Blender's requirements specified [here](https://www.blender.org/downlo
 
 ## TODOs
 
-- [ ] Provide an option for the user to generate multiple images at once.
 - [ ] Integrate the `img2img` Stable Diffusion pipeline into the add-on as well to generate variations of input texture conditioned on prompt.
 - [ ] Add image upscaler module.
 - [ ] Add material map generator module (normal map, displacement map, roughness map).
