@@ -1,5 +1,5 @@
 # Solvent
-AI-Assisted Texture Generation in Blender
+AI-Assisted Texture Generation Toolkit in Blender
 
 ## Prerequisites
 

@@ -2,7 +2,7 @@
 
 bl_info = {
     "name": "Solvent",
-    "description": "AI-Assisted Texture Generation in Blender",
+    "description": "AI-Assisted Texture Generation Toolkit in Blender",
     "author": "James Raphael Tiovalen",
     "version": (0, 0, 1),
     "blender": (3, 0, 0),
