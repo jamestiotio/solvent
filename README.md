@@ -76,16 +76,20 @@ If you encounter any problems or have any suggestions, feel free to raise an [is
 
 This add-on is licensed under the GNU General Public License v2.0 as attached in this repository [here](./LICENSE), the [same license](https://git.blender.org/gitweb/gitweb.cgi/blender.git/blob/HEAD:/doc/license/GPL-license.txt) that Blender uses.
 
-This project depends on these following projects:
+This project depends on the following packages:
 
-| Project | License |
+| Package | License |
 |:-------:|:--------------------:|
 | [PyTorch](https://pytorch.org/) | [BSD 3-Clause "New" or "Revised" License](https://github.com/pytorch/pytorch/blob/master/LICENSE) |
 | [Diffusers](https://github.com/huggingface/diffusers) | [Apache License 2.0](https://github.com/huggingface/diffusers/blob/main/LICENSE) |
 | [Transformers](https://github.com/huggingface/transformers) | [Apache License 2.0](https://github.com/huggingface/transformers/blob/main/LICENSE) |
 | [Scipy](https://scipy.org/) | [BSD 3-Clause "New" or "Revised" License](https://github.com/scipy/scipy/blob/main/LICENSE.txt) |
 
+Furthermore, this project also depends on the saved checkpoint weights of the following pre-trained models:
+
+| Model | License |
+|:-------:|:--------------------:|
 | [Stable Diffusion v1-4](https://huggingface.co/CompVis/stable-diffusion-v1-4) | [CreativeML Open RAIL-M License](https://huggingface.co/spaces/CompVis/stable-diffusion-license) |
 Any generated texture images are subject to the Creative Commons CC0 1.0 Universal Public Domain Dedication License specified [here](https://creativecommons.org/publicdomain/zero/1.0/legalcode).
 
-Use of this add-on implies that you agree with all of the terms and conditions mentioned in all of the licenses above.
+Use of this add-on implies that you agree with all of the terms and conditions mentioned in all of the relevant licenses, which would include whichever model(s) you used to produce the image outputs.
