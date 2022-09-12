@@ -1,5 +1,5 @@
 # Solvent
-Texture Generation Using Stable Diffusion Model in Blender
+AI-Assisted Texture Generation in Blender
 
 ## Prerequisites
 
