@@ -31,12 +31,12 @@ REQUIRED_PACKAGES_INSTALLED = False
 
 
 def import_module(package: constants.Package) -> None:
-    package_name = package.name
+    package_name = package.import_name if package.import_name else package.name
     if not package_name in globals():
         globals()[package_name] = importlib.import_module(package_name)
 
 
-class SolventUserInput(bpy.types.PropertyGroup):
+class SolventTextureGenerationUserInput(bpy.types.PropertyGroup):
     texture_name: bpy.props.StringProperty(
         name="Texture Name",
         description="Name of the texture used for the output file",
@@ -44,6 +44,25 @@ class SolventUserInput(bpy.types.PropertyGroup):
     texture_prompt: bpy.props.StringProperty(
         name="Texture Prompt",
         description="Prompt used for the texture",
+    )
+    texture_initial_image: bpy.props.StringProperty(
+        name="Initial Image",
+        subtype="FILE_PATH",
+        maxlen=1024,
+        description="Select path to the initial image, if any",
+    )
+    texture_mask_image: bpy.props.StringProperty(
+        name="Mask Image",
+        subtype="FILE_PATH",
+        maxlen=1024,
+        description="Select path to the mask image, if any",
+    )
+    texture_variation_strength: bpy.props.FloatProperty(
+        name="Variation Strength",
+        default=0.8,
+        min=0.0,
+        max=1.0,
+        description="How much to transform the initial image, if any. A value of 1 would ignore the initial image",
     )
     texture_seed: bpy.props.IntProperty(
         name="Texture Seed",
@@ -77,7 +96,7 @@ class SolventUserInput(bpy.types.PropertyGroup):
         name="Autocast",
         default=True,
         description="Whether to use automatic mixed precision or not. Mixed precision would take a shorter time to generate the texture but it would slightly reduce the quality of the texture. It's highly recommended to keep this enabled.\n\nIf you use half precision, autocast must be enabled.\n\nIf you use CPU, you must disable autocast",
-        update=lambda self, context: callbacks.update_model_autocast(self, context),
+        update=callbacks.update_model_autocast,
     )
     if constants.CURRENT_PLATFORM == "Darwin":
         model_precision: bpy.props.EnumProperty(
@@ -97,9 +116,7 @@ class SolventUserInput(bpy.types.PropertyGroup):
             ],
             default="Half",
             description="The precision of the PyTorch model. Higher precision might generate higher-quality textures but would require more GPU VRAM. It's highly recommended to use half precision.\n\nIf you use half precision, autocast must be enabled.\n\nIf you use CPU, you must use full precision and disable autocast",
-            update=lambda self, context: callbacks.update_model_precision_and_autocast(
-                self, context
-            ),
+            update=callbacks.update_model_precision_and_autocast,
         )
     if constants.CURRENT_PLATFORM == "Darwin":
         # Assume that the user uses an M1 Mac
@@ -112,9 +129,7 @@ class SolventUserInput(bpy.types.PropertyGroup):
             ],
             default="MPS",
             description="The device used by the model to perform the texture generation.\n\nIf you use CPU, you must use full precision and disable autocast",
-            update=lambda self, context: callbacks.update_model_precision_and_autocast(
-                self, context
-            ),
+            update=callbacks.update_model_precision_and_autocast,
         )
     else:
         # Should use torch.cuda.is_available() to display available options but it requires the PyTorch package to be installed in the first place (cyclic dependency problem)
@@ -126,9 +141,7 @@ class SolventUserInput(bpy.types.PropertyGroup):
             ],
             default="GPU",
             description="The device used by the model to perform the texture generation.\n\nIf you use CPU, you must use full precision and disable autocast",
-            update=lambda self, context: callbacks.update_model_precision_and_autocast(
-                self, context
-            ),
+            update=callbacks.update_model_precision_and_autocast,
         )
     model_scheduler: bpy.props.EnumProperty(
         name="Model Scheduler",
@@ -167,7 +180,7 @@ class SolventUserInput(bpy.types.PropertyGroup):
         name="Batching",
         default=False,
         description="Whether to batch the texture generation or not. Batching would reduce the time taken to generate multiple textures but it would increase the GPU VRAM required. It's highly recommended to keep this disabled due to limited memory constraints in consumer-grade hardware.\n\nIf you use an M1 Mac, you must disable batching",
-        update=lambda self, context: callbacks.update_batching(self, context),
+        update=callbacks.update_batching,
     )
 
 
@@ -178,9 +191,16 @@ class SolventGenerateTexture(bpy.types.Operator):
     bl_options = {"REGISTER", "UNDO"}
 
     def execute(self, context) -> Set[str]:
-        user_input = constants.UserInput(
+        user_input = constants.TextureGenerationUserInput(
             texture_name=bpy.context.scene.input_tool.texture_name,
             texture_prompt=bpy.context.scene.input_tool.texture_prompt,
+            texture_initial_image=bpy.path.abspath(
+                bpy.context.scene.input_tool.texture_initial_image
+            ),
+            texture_mask_image=bpy.path.abspath(
+                bpy.context.scene.input_tool.texture_mask_image
+            ),
+            texture_variation_strength=bpy.context.scene.input_tool.texture_variation_strength,
             texture_seed=bpy.context.scene.input_tool.texture_seed,
             model_steps=bpy.context.scene.input_tool.model_steps,
             model_guidance_scale=bpy.context.scene.input_tool.model_guidance_scale,
@@ -215,10 +235,10 @@ class SolventGenerateTexture(bpy.types.Operator):
 
         os.environ["PYTORCH_ENABLE_MPS_FALLBACK"] = "1"
 
-        from solvent.model import text2image
-
         try:
-            image_paths = text2image(user_input)
+            from solvent.model import generate_texture
+
+            image_paths = generate_texture(user_input)
         except Exception as e:
             self.report({"ERROR"}, f"Something went wrong! Error message: {e}")
             return {"CANCELLED"}
@@ -296,6 +316,15 @@ class SolventTexturePanel(bpy.types.Panel):
         row.prop(input_tool, "texture_prompt")
 
         row = layout.row()
+        row.prop(input_tool, "texture_initial_image")
+
+        row = layout.row()
+        row.prop(input_tool, "texture_mask_image")
+
+        row = layout.row()
+        row.prop(input_tool, "texture_variation_strength")
+
+        row = layout.row()
         row.prop(input_tool, "texture_seed")
 
         row = layout.row()
@@ -363,9 +392,10 @@ class SolventAboutPanel(bpy.types.Panel):
 
         layout.label(text="Installed Packages:")
         for package in constants.REQUIRED_PACKAGES:
-            if hasattr(globals()[package.name], "__version__"):
+            package_name = package.import_name if package.import_name else package.name
+            if hasattr(globals()[package_name], "__version__"):
                 layout.label(
-                    text=f"{package.name} v{globals()[package.name].__version__}",
+                    text=f"{package.name} v{globals()[package_name].__version__}",
                     icon="PACKAGE",
                 )
             else:
@@ -400,24 +430,44 @@ class SolventInstallPackages(bpy.types.Operator):
                     BLENDER_CONSOLE_WINDOW_OPENED = True
                 utils.setup()
                 for package in constants.REQUIRED_PACKAGES:
+                    package_name = (
+                        package.import_name if package.import_name else package.name
+                    )
                     spec_output = subprocess.check_output(
                         [
                             constants.PYTHON_EXECUTABLE_LOCATION,
                             "-c",
-                            f"from importlib.util import find_spec; print(find_spec('{package.name}'))",
+                            f"from importlib.util import find_spec; print(find_spec('{package_name}'))",
                         ],
                         env=constants.ENVIRONMENT_VARIABLES,
                     )
                     if spec_output in [b"None\n", b"None\r\n"]:
                         utils.install(package)
                     import_module(package)
-                    if (
-                        package.version is not None
-                        and hasattr(globals()[package.name], "__version__")
-                        and globals()[package.name].__version__ != package.version
+                    if package.version is not None and hasattr(
+                        globals()[package_name], "__version__"
                     ):
-                        utils.install(package)
-            except (subprocess.CalledProcessError, ImportError):
+                        installed_package_version = globals()[
+                            package_name
+                        ].__version__.split(".")
+                        installed_package_version += ["0"] * (
+                            3 - len(installed_package_version)
+                        )
+                        for idx, val in enumerate(installed_package_version):
+                            installed_package_version[idx] = int(val.split("+")[0])
+                        installed_package_version = tuple(
+                            installed_package_version[0:3]
+                        )
+                        target_package_version = package.version.split(".")
+                        target_package_version += ["0"] * (
+                            3 - len(target_package_version)
+                        )
+                        for idx, val in enumerate(target_package_version):
+                            target_package_version[idx] = int(val.split("+")[0])
+                        target_package_version = tuple(target_package_version[0:3])
+                        if installed_package_version < target_package_version:
+                            utils.install(package)
+            except (subprocess.CalledProcessError, ImportError) as e:
                 pip_install_commands = ""
                 preamble = (
                     f'"{constants.PYTHON_EXECUTABLE_LOCATION}" -m pip install --upgrade'
@@ -428,9 +478,12 @@ class SolventInstallPackages(bpy.types.Operator):
                         if package.extra_args is not None
                         else ""
                     )
-                    pip_install_commands += (
-                        f"{preamble} {package.name}=={package.version} {extra_args}\n"
-                    )
+                    if package.version is not None:
+                        pip_install_commands += f"{preamble} {package.name}=={package.version} {extra_args}\n"
+                    else:
+                        pip_install_commands += (
+                            f"{preamble} {package.name} {extra_args}\n"
+                        )
                 pip_install_commands = pip_install_commands[:-1]
                 env_var_command = (
                     "set PYTHONNOUSERSITE=1"
@@ -458,7 +511,7 @@ class SolventInstallPackages(bpy.types.Operator):
                 bpy.utils.register_class(cls)
 
             bpy.types.Scene.input_tool = bpy.props.PointerProperty(
-                type=SolventUserInput
+                type=SolventTextureGenerationUserInput
             )
 
             return {"FINISHED"}
@@ -522,7 +575,7 @@ preparation_classes = (
     SolventPreferences,
 )
 classes = (
-    SolventUserInput,
+    SolventTextureGenerationUserInput,
     SolventGenerateTexture,
     SolventTexturePanel,
     SolventAboutPanel,
@@ -550,13 +603,27 @@ def register() -> None:
 
         # Check currently-imported packages for version compatibility
         for package in constants.REQUIRED_PACKAGES:
-            if (
-                package.version is not None
-                and hasattr(globals()[package.name], "__version__")
-                and globals()[package.name].__version__ != package.version
+            package_name = package.import_name if package.import_name else package.name
+            if package.version is not None and hasattr(
+                globals()[package_name], "__version__"
             ):
-                # Let the user manually update the packages at this point
-                return
+                installed_package_version = globals()[package_name].__version__.split(
+                    "."
+                )
+                installed_package_version += ["0"] * (
+                    3 - len(installed_package_version)
+                )
+                for idx, val in enumerate(installed_package_version):
+                    installed_package_version[idx] = int(val.split("+")[0])
+                installed_package_version = tuple(installed_package_version[0:3])
+                target_package_version = package.version.split(".")
+                target_package_version += ["0"] * (3 - len(target_package_version))
+                for idx, val in enumerate(target_package_version):
+                    target_package_version[idx] = int(val.split("+")[0])
+                target_package_version = tuple(target_package_version[0:3])
+                if installed_package_version < target_package_version:
+                    # Let the user manually update the packages at this point
+                    return
         global REQUIRED_PACKAGES_INSTALLED
         REQUIRED_PACKAGES_INSTALLED = True
     except ModuleNotFoundError:
@@ -569,7 +636,9 @@ def register() -> None:
         bpy.utils.register_class(cls)
 
     if REQUIRED_PACKAGES_INSTALLED:
-        bpy.types.Scene.input_tool = bpy.props.PointerProperty(type=SolventUserInput)
+        bpy.types.Scene.input_tool = bpy.props.PointerProperty(
+            type=SolventTextureGenerationUserInput
+        )
 
 
 def unregister() -> None:

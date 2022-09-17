@@ -25,13 +25,19 @@ ENVIRONMENT_VARIABLES["PYTHONNOUSERSITE"] = "1"
 class Package:
     name: str
     version: Optional[str] = None
+    # Some packages might need extra arguments to be passed to pip to be installed properly
     extra_args: Optional[List[str]] = None
+    # Some packages might have a different import name than their PyPI package name
+    import_name: Optional[str] = None
 
 
 @dataclass
-class UserInput:
+class TextureGenerationUserInput:
     texture_name: str
     texture_prompt: str
+    texture_initial_image: str
+    texture_mask_image: str
+    texture_variation_strength: float
     texture_seed: int
     model_steps: int
     model_guidance_scale: float
@@ -76,8 +82,6 @@ else:
 REQUIRED_PACKAGES.append(Package(name="diffusers", version="0.3.0"))
 REQUIRED_PACKAGES.append(Package(name="transformers", version="4.21.3"))
 REQUIRED_PACKAGES.append(Package(name="scipy", version="1.9.1"))
+REQUIRED_PACKAGES.append(Package(name="ftfy", version="6.1.1"))
+REQUIRED_PACKAGES.append(Package(name="spacy", version="3.4.1"))
 REQUIRED_PACKAGES = tuple(REQUIRED_PACKAGES)
-OPTIONAL_PACKAGES = (
-    Package(name="ftfy", version="6.1.1"),
-    Package(name="spacy", version="3.4.1"),
-)

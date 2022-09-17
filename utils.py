@@ -24,6 +24,7 @@ def install(package: constants.Package) -> None:
             "pip",
             "install",
             "--upgrade",
+            "--no-warn-script-location",
             package.name,
         ]
     else:
@@ -33,6 +34,7 @@ def install(package: constants.Package) -> None:
             "pip",
             "install",
             "--upgrade",
+            "--no-warn-script-location",
             f"{package.name}=={package.version}",
         ]
 

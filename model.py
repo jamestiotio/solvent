@@ -1,13 +1,17 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 
+from contextlib import nullcontext
 from diffusers import (
     StableDiffusionPipeline,
+    StableDiffusionImg2ImgPipeline,
+    StableDiffusionInpaintPipeline,
     DDIMScheduler,
     LMSDiscreteScheduler,
     PNDMScheduler,
 )
 import gc
 import os
+from PIL import Image
 import solvent.constants as constants
 from typing import Optional, List
 import torch
@@ -41,9 +45,14 @@ def find_unique_filename(path: str) -> str:
     return path
 
 
-def text2image(user_input: constants.UserInput) -> Optional[List]:
+def generate_texture(
+    user_input: constants.TextureGenerationUserInput,
+) -> Optional[List]:
     texture_name = user_input.texture_name
     texture_prompt = user_input.texture_prompt
+    texture_initial_image = user_input.texture_initial_image
+    texture_mask_image = user_input.texture_mask_image
+    texture_variation_strength = user_input.texture_variation_strength
     texture_seed = user_input.texture_seed
     model_steps = user_input.model_steps
     model_guidance_scale = user_input.model_guidance_scale
@@ -82,34 +91,48 @@ def text2image(user_input: constants.UserInput) -> Optional[List]:
 
     generator = torch.Generator(device).manual_seed(texture_seed)
 
+    # Conditionally build the parameters
     if (
         constants.CURRENT_PLATFORM != "Darwin"
         and model_precision == "Half"
         and model_autocast
         and device != "cpu"
     ):
-        pipe = StableDiffusionPipeline.from_pretrained(
-            constants.MODEL_PATH,
-            local_files_only=True,
-            use_auth_token=False,
-            revision="fp16",
-            torch_dtype=torch.float16,
-            scheduler=scheduler,
-        ).to(device)
+        pipeline_params = {
+            "pretrained_model_name_or_path": constants.MODEL_PATH,
+            "local_files_only": True,
+            "use_auth_token": False,
+            "revision": "fp16",
+            "torch_dtype": torch.float16,
+            "scheduler": scheduler,
+        }
     else:
-        pipe = StableDiffusionPipeline.from_pretrained(
-            constants.MODEL_PATH,
-            local_files_only=True,
-            use_auth_token=False,
-            scheduler=scheduler,
-        ).to(device)
+        pipeline_params = {
+            "pretrained_model_name_or_path": constants.MODEL_PATH,
+            "local_files_only": True,
+            "use_auth_token": False,
+            "scheduler": scheduler,
+        }
 
-    pipe.set_progress_bar_config(disable=False)
+    if texture_initial_image:
+        if texture_mask_image:
+            pipe = StableDiffusionInpaintPipeline.from_pretrained(**pipeline_params).to(
+                device
+            )
+        else:
+            pipe = StableDiffusionImg2ImgPipeline.from_pretrained(**pipeline_params).to(
+                device
+            )
+    else:
+        pipe = StableDiffusionPipeline.from_pretrained(**pipeline_params).to(device)
+
+    pipe.set_progress_bar_config(disable=False, desc="Generating texture")
 
     if model_attention_slicing:
         pipe.enable_attention_slicing()
 
     if texture_tileable:
+        # Only patch the `Conv2d` modules in the components that have it instead of globally (more efficient and better granularity of control)
         targets = [pipe.vae, pipe.unet]
         for target in targets:
             for module in target.modules():
@@ -117,87 +140,57 @@ def text2image(user_input: constants.UserInput) -> Optional[List]:
                     # Patch to make tileable textures: https://gitlab.com/-/snippets/2395088
                     module.padding_mode = "circular"
 
+    if texture_initial_image:
+        with open(texture_initial_image, "rb") as initial_image_file:
+            initial_image = (
+                Image.open(initial_image_file).convert("RGB").resize((512, 512))
+            )
+        if texture_mask_image:
+            with open(texture_mask_image, "rb") as mask_image_file:
+                mask_image = (
+                    Image.open(mask_image_file).convert("RGB").resize((512, 512))
+                )
+
     images = []
 
-    if constants.CURRENT_PLATFORM == "Darwin":
-        try:
-            if batching:
-                # TODO: First-time "warmup" pass (https://github.com/huggingface/diffusers/issues/372)
-                _ = pipe(texture_prompt, num_inference_steps=1)
-                images = pipe(
-                    prompt=texture_prompt,
-                    num_inference_steps=model_steps,
-                    guidance_scale=model_guidance_scale,
-                    generator=generator,
-                ).images
-            else:
-                for _ in range(num_of_images):
-                    # TODO: First-time "warmup" pass (https://github.com/huggingface/diffusers/issues/372)
-                    _ = pipe(texture_prompt, num_inference_steps=1)
-                    image = pipe(
-                        prompt=texture_prompt,
-                        num_inference_steps=model_steps,
-                        guidance_scale=model_guidance_scale,
-                        generator=generator,
-                    )["sample"][0]
-                    images.append(image)
-        except RuntimeError as e:
-            raise RuntimeError(
-                f"The model failed to generate a texture. Error message: {e}"
-            )
+    pipe_args = {
+        "prompt": texture_prompt,
+        "num_inference_steps": model_steps,
+        "guidance_scale": model_guidance_scale,
+        "generator": generator,
+    }
 
+    # Conditionally build the arguments
+    if texture_initial_image:
+        pipe_args["init_image"] = initial_image
+        pipe_args["strength"] = texture_variation_strength
+        if texture_mask_image:
+            pipe_args["mask_image"] = mask_image
+
+    # Conditionally select the suitable context manager
+    if model_autocast and device != "cpu" and constants.CURRENT_PLATFORM != "Darwin":
+        use_autocast = True
     else:
-        if model_autocast and device != "cpu":
-            if batching:
-                with torch.autocast(device):
-                    try:
-                        images = pipe(
-                            prompt=texture_prompt,
-                            num_inference_steps=model_steps,
-                            guidance_scale=model_guidance_scale,
-                            generator=generator,
-                        ).images
-                    except RuntimeError as e:
-                        raise RuntimeError(
-                            f"The model failed to generate a texture. Error message: {e}"
-                        )
-            else:
-                for _ in range(num_of_images):
-                    with torch.autocast(device):
-                        try:
-                            image = pipe(
-                                prompt=texture_prompt,
-                                num_inference_steps=model_steps,
-                                guidance_scale=model_guidance_scale,
-                                generator=generator,
-                            )["sample"][0]
-                            images.append(image)
-                        except RuntimeError as e:
-                            raise RuntimeError(
-                                f"The model failed to generate a texture. Error message: {e}"
-                            )
+        use_autocast = False
+
+    try:
+        if constants.CURRENT_PLATFORM == "Darwin":
+            # TODO: First-time "warmup" pass (https://github.com/huggingface/diffusers/issues/372)
+            _ = pipe(texture_prompt, num_inference_steps=1)
+
+        if batching:
+            with torch.autocast(device) if use_autocast else nullcontext():
+                images = pipe(**pipe_args).images
         else:
-            try:
-                if batching:
-                    images = pipe(
-                        prompt=texture_prompt,
-                        num_inference_steps=model_steps,
-                        guidance_scale=model_guidance_scale,
-                        generator=generator,
-                    ).images
-                else:
-                    for _ in range(num_of_images):
-                        image = pipe(
-                            prompt=texture_prompt,
-                            num_inference_steps=model_steps,
-                            guidance_scale=model_guidance_scale,
-                            generator=generator,
-                        )["sample"][0]
-                        images.append(image)
-            except RuntimeError as e:
-                raise RuntimeError(
-                    f"The model failed to generate a texture. Error message: {e}"
-                )
+            for _ in range(num_of_images):
+                with torch.autocast(device) if use_autocast else nullcontext():
+                    image = pipe(**pipe_args).images[0]
+                    images.append(image)
+
+    except RuntimeError as e:
+        raise RuntimeError(
+            f"The model failed to generate a texture. Error message: {e}"
+        )
 
     image_paths = []
 

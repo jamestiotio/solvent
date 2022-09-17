@@ -1,6 +1,18 @@
 # Solvent
 AI-Assisted Texture Generation Toolkit in Blender
 
+## Features
+
+- Text-to-Image Texture Generation
+  - Generate textures, concept art, and background assets by using Stable Diffusion
+  - Generate multiple texture images, all readily accessible in Blender
+  - Generate tileable textures
+  - Experiment with various adjustable configuration parameters
+  - Enable optimizations by default to save GPU VRAM and time taken for generation
+- Image-to-Image Texture Generation
+  - Create variations on pre-existing input textures, concept art, and background assets
+  - Provide mask images to indicate which sections of input textures to keep or modify
+
 ## Prerequisites
 
 Ensure that you already have the following software installed, preferably the latest versions:
@@ -40,7 +52,7 @@ Optionally, you might want to create a [GitHub](https://github.com/) account as 
 
 5. Enable the Sidebar (go to `View > Sidebar` or click the `N` key) if it is not enabled yet. You can then go to `Sidebar > Solvent` and input your parameters to generate the texture that you want. After setting the parameters to your heart's content, press the `Generate Texture` button and wait. This might take a while on a CUDA-compatible GPU and even longer on a CPU. Depending on your CPU/GPU's speed and the parameters that you have chosen, you can go get yet another cup of coffee while waiting.
 
-6. If you have selected an object/mesh before generating the texture, the add-on will also attempt to automatically apply the texture to the currently-active material (as the `Base Color` of the `Principled BSDF` node). Otherwise, you can find the texture image in the folder that you have specified and you can apply it to the material yourself.
+6. If you have selected an object/mesh before generating the texture, the add-on will also attempt to automatically apply the texture (or the first generated texture, if you have indicated to generate multiple texture images) to the currently-active material (as the `Base Color` of the `Principled BSDF` node). Otherwise, you can find the texture image in the folder that you have specified and you can apply it to the material yourself.
 
 7. ???
 
@@ -62,9 +74,10 @@ On top of Blender's requirements specified [here](https://www.blender.org/downlo
 
 ## TODOs
 
-- [ ] Integrate the `img2img` Stable Diffusion pipeline into the add-on as well to generate variations of input texture conditioned on prompt.
 - [ ] Add image upscaler module.
 - [ ] Add material map generator module (normal map, displacement map, roughness map).
+- [ ] Add prompt engineering to assist beginners with experimenting with Stable Diffusion.
+- [ ] Implement asynchronous Python package downloading and texture generation to allow Blender to stay interactive during processing.
 - [ ] Add support to use MPS acceleration on M1 Mac once the [relevant PyTorch version](https://pytorch.org/blog/introducing-accelerated-pytorch-training-on-mac/) becomes stable.
 - [ ] Ensure cross-compatibility across Windows, Mac, and Linux.
 - [ ] Check the minimum Blender version that this add-on can support.
@@ -82,7 +95,9 @@ This project depends on the following packages:
 | [PyTorch](https://pytorch.org/) | [BSD 3-Clause "New" or "Revised" License](https://github.com/pytorch/pytorch/blob/master/LICENSE) |
 | [Diffusers](https://github.com/huggingface/diffusers) | [Apache License 2.0](https://github.com/huggingface/diffusers/blob/main/LICENSE) |
 | [Transformers](https://github.com/huggingface/transformers) | [Apache License 2.0](https://github.com/huggingface/transformers/blob/main/LICENSE) |
-| [Scipy](https://scipy.org/) | [BSD 3-Clause "New" or "Revised" License](https://github.com/scipy/scipy/blob/main/LICENSE.txt) |
+| [SciPy](https://scipy.org/) | [BSD 3-Clause "New" or "Revised" License](https://github.com/scipy/scipy/blob/main/LICENSE.txt) |
+| [ftfy](https://ftfy.readthedocs.io/en/latest/) | [MIT License](https://github.com/rspeer/python-ftfy/blob/main/LICENSE.txt) |
+| [spaCy](https://spacy.io/) | [MIT License](https://github.com/explosion/spaCy/blob/master/LICENSE) |
 
 Furthermore, this project also depends on the saved checkpoint weights of the following pre-trained models:
 
