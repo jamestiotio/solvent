@@ -70,7 +70,8 @@ On top of Blender's requirements specified [here](https://www.blender.org/downlo
 
 ## Known Issues
 
-- If you are on Windows, you might sometimes encounter errors if you have not enabled long file and directory paths. To fix this, simply execute the [attached PowerShell script](./enable_long_paths_on_windows.ps1) as an administrator. Fair warning: the script will modify your Windows Registry, which might break your system if anything goes wrong. If you do not trust the script or if you do not understand what it is doing, then do not run it. For this very reason, the script is not automatically executed by this add-on during setup. You have been warned.
+- If you are on Windows, you might sometimes encounter errors if you have not enabled long file and directory paths. To fix this, simply execute the [attached PowerShell script](./enable_long_paths_on_windows.ps1) as an administrator.
+  > Fair warning: the script will modify your Windows Registry, which might break your system if anything goes wrong. If you do not trust the script or if you do not understand what it is doing, then do not run it. For this very reason, the script is not automatically executed by this add-on during setup. You have been warned.
 
 - As mentioned [here](https://pytorch.org/get-started/locally/), MacOS binaries of PyTorch do not support CUDA yet. Thus, building and installing PyTorch from source would be required if you would like to use CUDA with it. You can follow the instructions outlined [here](https://github.com/pytorch/pytorch#from-source) to do that and ensure that Blender's Python interpreter can detect it.
 
