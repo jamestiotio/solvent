@@ -53,13 +53,13 @@ class SolventTextureGenerationUserInput(bpy.types.PropertyGroup):
     texture_initial_image: bpy.props.StringProperty(
         name="Initial Image",
         subtype="FILE_PATH",
-        maxlen=1024,
+        maxlen=259,
         description="Select path to the initial image, if any",
     )
     texture_mask_image: bpy.props.StringProperty(
         name="Mask Image",
         subtype="FILE_PATH",
-        maxlen=1024,
+        maxlen=259,
         description="Select path to the mask image, if any",
     )
     texture_variation_strength: bpy.props.FloatProperty(
@@ -210,7 +210,7 @@ class SolventTextureGenerationUserInput(bpy.types.PropertyGroup):
     texture_path: bpy.props.StringProperty(
         name="Texture Path",
         subtype="DIR_PATH",
-        maxlen=1024,
+        maxlen=259,
         default=tempfile.gettempdir(),
         description="Select path to export texture to",
     )

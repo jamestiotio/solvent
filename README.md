@@ -21,6 +21,8 @@ Ensure that you already have the following software installed, preferably the la
 - [Git](https://git-scm.com/)
 - [Git LFS](https://git-lfs.github.com/)
 
+If you are on MacOS and Linux, you would also need to install [Rust](https://www.rust-lang.org/tools/install). This is because the `transformers` Python library uses the `tokenizers` library's wheel built in Rust.
+
 Additionally, you would also need to have a [Hugging Face](https://huggingface.co/) account to download the pre-trained Stable Diffusion model checkpoint weights. You would need to agree to the Terms and Conditions stipulated by the CreativeML Open RAIL-M License [here](https://huggingface.co/CompVis/stable-diffusion-v1-4) before you are able to download their pre-trained model weights.
 
 Optionally, you might want to create a [GitHub](https://github.com/) account as well to raise issues or pull requests to this repository.
@@ -67,6 +69,8 @@ On top of Blender's requirements specified [here](https://www.blender.org/downlo
 - Preferably either an Apple Mac with the M1 chip (which supports [MPS](https://developer.apple.com/documentation/metalperformanceshaders)) or a device with a CUDA-compatible NVIDIA GPU as listed [here](https://developer.nvidia.com/cuda-gpus#compute). This is because PyTorch currently only works with either MPS or CUDA-compatible NVIDIA GPUs for GPU acceleration. You could try using PyTorch with CPU (which would run more slowly) if you do not have an M1 Mac or a CUDA-compatible NVIDIA GPU. The GPU should also possess sufficient dedicated GPU memory, preferably 6.5 GB or more. Otherwise, if the GPU possesses insufficient dedicated memory, Blender might intermittently and randomly crash.
 
 ## Known Issues
+
+- If you are on Windows, you might sometimes encounter errors if you have not enabled long file and directory paths. To fix this, simply execute the [attached PowerShell script](./enable_long_paths_on_windows.ps1) as an administrator. Fair warning: the script will modify your Windows Registry, which might break your system if anything goes wrong. If you do not trust the script or if you do not understand what it is doing, then do not run it. For this very reason, the script is not automatically executed by this add-on during setup. You have been warned.
 
 - As mentioned [here](https://pytorch.org/get-started/locally/), MacOS binaries of PyTorch do not support CUDA yet. Thus, building and installing PyTorch from source would be required if you would like to use CUDA with it. You can follow the instructions outlined [here](https://github.com/pytorch/pytorch#from-source) to do that and ensure that Blender's Python interpreter can detect it.
 
