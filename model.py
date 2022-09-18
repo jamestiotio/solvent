@@ -79,7 +79,7 @@ def generate_texture(
     if model_device == "CPU":
         device = "cpu"
 
-    elif model_scheduler == "DDIM":
+    if model_scheduler == "DDIM":
         scheduler = ddim_scheduler
     elif model_scheduler == "K-LMS":
         scheduler = lms_scheduler
