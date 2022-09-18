@@ -7,23 +7,28 @@ bl_info = {
     "version": (0, 0, 1),
     "blender": (3, 0, 0),
     "location": "View3D > Sidebar > Solvent",
-    "warning": "This requires installation of additional packages and is currently in heavy development.",
+    "warning": (
+        "This requires installation of additional packages and is currently in heavy"
+        " development."
+    ),
     "support": "COMMUNITY",
     "doc_url": "https://github.com/jamestiotio/solvent",
     "tracker_url": "https://github.com/jamestiotio/solvent/issues",
     "category": "Development",
 }
 
-import bpy
 import importlib
 import os
 import secrets
-import solvent.callbacks as callbacks
-import solvent.constants as constants
-import solvent.utils as utils
 import subprocess
 import tempfile
 from typing import Set
+
+import bpy
+
+import solvent.callbacks as callbacks
+import solvent.constants as constants
+import solvent.utils as utils
 
 # There is no way to check the current status of the Console Window (open/closed), so we assume that the user has not opened it yet
 BLENDER_CONSOLE_WINDOW_OPENED = False
@@ -62,7 +67,10 @@ class SolventTextureGenerationUserInput(bpy.types.PropertyGroup):
         default=0.8,
         min=0.0,
         max=1.0,
-        description="How much to transform the initial image, if any. A value of 1 would ignore the initial image",
+        description=(
+            "How much to transform the initial image, if any. A value of 1 would ignore"
+            " the initial image"
+        ),
     )
     texture_seed: bpy.props.IntProperty(
         name="Texture Seed",
@@ -74,13 +82,20 @@ class SolventTextureGenerationUserInput(bpy.types.PropertyGroup):
         name="Model Steps",
         default=50,
         min=1,
-        description="The number of denoising iterations. Larger values would take a longer time to finish but would generate higher-quality textures",
+        description=(
+            "The number of denoising iterations. Larger values would take a longer time"
+            " to finish but would generate higher-quality textures"
+        ),
     )
     model_guidance_scale: bpy.props.FloatProperty(
         name="Model Guidance Scale",
         default=7.5,
         min=1,
-        description="The adherence to the text prompt and sample quality. Higher values would generate more accurate, but less diverse, textures. A value of 1 would disable classifier-free guidance",
+        description=(
+            "The adherence to the text prompt and sample quality. Higher values would"
+            " generate more accurate, but less diverse, textures. A value of 1 would"
+            " disable classifier-free guidance"
+        ),
     )
     texture_tileable: bpy.props.BoolProperty(
         name="Tileable",
@@ -90,12 +105,23 @@ class SolventTextureGenerationUserInput(bpy.types.PropertyGroup):
     model_attention_slicing: bpy.props.BoolProperty(
         name="Attention Slicing",
         default=True,
-        description="Whether to chunk the attention computation or not. Slicing the attention computation would reduce GPU VRAM usage but it would slightly increase the time taken to generate the texture. It's highly recommended to keep this enabled",
+        description=(
+            "Whether to chunk the attention computation or not. Slicing the attention"
+            " computation would reduce GPU VRAM usage but it would slightly increase"
+            " the time taken to generate the texture. It's highly recommended to keep"
+            " this enabled"
+        ),
     )
     model_autocast: bpy.props.BoolProperty(
         name="Autocast",
         default=True,
-        description="Whether to use automatic mixed precision or not. Mixed precision would take a shorter time to generate the texture but it would slightly reduce the quality of the texture. It's highly recommended to keep this enabled.\n\nIf you use half precision, autocast must be enabled.\n\nIf you use CPU, you must disable autocast",
+        description=(
+            "Whether to use automatic mixed precision or not. Mixed precision would"
+            " take a shorter time to generate the texture but it would slightly reduce"
+            " the quality of the texture. It's highly recommended to keep this"
+            " enabled.\n\nIf you use half precision, autocast must be enabled.\n\nIf"
+            " you use CPU, you must disable autocast"
+        ),
         update=callbacks.update_model_autocast,
     )
     if constants.CURRENT_PLATFORM == "Darwin":
@@ -105,7 +131,10 @@ class SolventTextureGenerationUserInput(bpy.types.PropertyGroup):
                 ("Full", "Full", "Full Precision"),
             ],
             default="Full",
-            description="The precision of the PyTorch model. Higher precision might generate higher-quality textures but would require more GPU VRAM",
+            description=(
+                "The precision of the PyTorch model. Higher precision might generate"
+                " higher-quality textures but would require more GPU VRAM"
+            ),
         )
     else:
         model_precision: bpy.props.EnumProperty(
@@ -115,7 +144,13 @@ class SolventTextureGenerationUserInput(bpy.types.PropertyGroup):
                 ("Full", "Full", "Full Precision"),
             ],
             default="Half",
-            description="The precision of the PyTorch model. Higher precision might generate higher-quality textures but would require more GPU VRAM. It's highly recommended to use half precision.\n\nIf you use half precision, autocast must be enabled.\n\nIf you use CPU, you must use full precision and disable autocast",
+            description=(
+                "The precision of the PyTorch model. Higher precision might generate"
+                " higher-quality textures but would require more GPU VRAM. It's highly"
+                " recommended to use half precision.\n\nIf you use half precision,"
+                " autocast must be enabled.\n\nIf you use CPU, you must use full"
+                " precision and disable autocast"
+            ),
             update=callbacks.update_model_precision_and_autocast,
         )
     if constants.CURRENT_PLATFORM == "Darwin":
@@ -128,7 +163,10 @@ class SolventTextureGenerationUserInput(bpy.types.PropertyGroup):
                 ("CPU", "CPU", "Use CPU (generally slower)"),
             ],
             default="MPS",
-            description="The device used by the model to perform the texture generation.\n\nIf you use CPU, you must use full precision and disable autocast",
+            description=(
+                "The device used by the model to perform the texture generation.\n\nIf"
+                " you use CPU, you must use full precision and disable autocast"
+            ),
             update=callbacks.update_model_precision_and_autocast,
         )
     else:
@@ -140,7 +178,10 @@ class SolventTextureGenerationUserInput(bpy.types.PropertyGroup):
                 ("CPU", "CPU", "Use CPU (generally slower)"),
             ],
             default="GPU",
-            description="The device used by the model to perform the texture generation.\n\nIf you use CPU, you must use full precision and disable autocast",
+            description=(
+                "The device used by the model to perform the texture generation.\n\nIf"
+                " you use CPU, you must use full precision and disable autocast"
+            ),
             update=callbacks.update_model_precision_and_autocast,
         )
     model_scheduler: bpy.props.EnumProperty(
@@ -151,7 +192,11 @@ class SolventTextureGenerationUserInput(bpy.types.PropertyGroup):
             ("PNDM", "PNDM", "Use PNDM Scheduler"),
         ],
         default="PNDM",
-        description="The scheduler used by the model to perform the texture generation. K-LMS would provide a good balance between quality and speed, while DDIM is generally faster",
+        description=(
+            "The scheduler used by the model to perform the texture generation. K-LMS"
+            " would provide a good balance between quality and speed, while DDIM is"
+            " generally faster"
+        ),
     )
     texture_format: bpy.props.EnumProperty(
         name="Texture Format",
@@ -174,12 +219,23 @@ class SolventTextureGenerationUserInput(bpy.types.PropertyGroup):
         default=1,
         min=1,
         max=4,
-        description="The number of texture images to generate. If batching is disabled, more textures generated would increase the time taken to generate all of the textures. Otherwise, more textures generated would increase the GPU VRAM required",
+        description=(
+            "The number of texture images to generate. If batching is disabled, more"
+            " textures generated would increase the time taken to generate all of the"
+            " textures. Otherwise, more textures generated would increase the GPU VRAM"
+            " required"
+        ),
     )
     batching: bpy.props.BoolProperty(
         name="Batching",
         default=False,
-        description="Whether to batch the texture generation or not. Batching would reduce the time taken to generate multiple textures but it would increase the GPU VRAM required. It's highly recommended to keep this disabled due to limited memory constraints in consumer-grade hardware.\n\nIf you use an M1 Mac, you must disable batching",
+        description=(
+            "Whether to batch the texture generation or not. Batching would reduce the"
+            " time taken to generate multiple textures but it would increase the GPU"
+            " VRAM required. It's highly recommended to keep this disabled due to"
+            " limited memory constraints in consumer-grade hardware.\n\nIf you use an"
+            " M1 Mac, you must disable batching"
+        ),
         update=callbacks.update_batching,
     )
 
@@ -250,7 +306,8 @@ class SolventGenerateTexture(bpy.types.Operator):
         if len(image_paths) == 1:
             self.report(
                 {"INFO"},
-                f"Texture has been generated successfully! Texture image is located at: {image_paths[0]}",
+                "Texture has been generated successfully! Texture image is located at:"
+                f" {image_paths[0]}",
             )
         else:
             self.report(
@@ -283,7 +340,8 @@ class SolventGenerateTexture(bpy.types.Operator):
             else:
                 self.report(
                     {"INFO"},
-                    "The first texture has been applied to the currently active material!",
+                    "The first texture has been applied to the currently active"
+                    " material!",
                 )
         except Exception as e:
             self.report(
@@ -437,7 +495,10 @@ class SolventInstallPackages(bpy.types.Operator):
                         [
                             constants.PYTHON_EXECUTABLE_LOCATION,
                             "-c",
-                            f"from importlib.util import find_spec; print(find_spec('{package_name}'))",
+                            (
+                                "from importlib.util import find_spec;"
+                                f" print(find_spec('{package_name}'))"
+                            ),
                         ],
                         env=constants.ENVIRONMENT_VARIABLES,
                     )
@@ -491,10 +552,10 @@ class SolventInstallPackages(bpy.types.Operator):
                     else "export PYTHONNOUSERSITE=1"
                 )
                 error_message = (
-                    "Attempt to automatically install the required Python packages has failed. "
-                    "Please install the Python packages manually by running the following commands in a terminal:\n"
-                    f"{env_var_command}\n"
-                    f"{pip_install_commands}"
+                    "Attempt to automatically install the required Python packages has"
+                    " failed. Please install the Python packages manually by running"
+                    " the following commands in a"
+                    f" terminal:\n{env_var_command}\n{pip_install_commands}"
                 )
                 self.report({"ERROR"}, str(error_message))
 
@@ -522,7 +583,10 @@ class SolventInstallPackages(bpy.types.Operator):
                 if constants.CURRENT_PLATFORM == "Windows"
                 else "non-elevated permissions"
             )
-            error_message = f"Blender must be started with {permission_level} in order to install the required Python packages properly."
+            error_message = (
+                f"Blender must be started with {permission_level} in order to install"
+                " the required Python packages properly."
+            )
             self.report({"ERROR"}, str(error_message))
             return {"CANCELLED"}
 
@@ -542,14 +606,23 @@ class SolventWarningPanel(bpy.types.Panel):
         layout = self.layout
 
         lines = [
-            f"Please install the necessary packages for the \"{bl_info.get('name')}\" add-on.",
+            (
+                "Please install the necessary packages for the"
+                f" \"{bl_info.get('name')}\" add-on."
+            ),
             f"1. Go to Edit > Preferences > Add-ons.",
-            f"2. Search for the add-on with the name \"{bl_info.get('category')}: {bl_info.get('name')}\"",
+            (
+                f"2. Search for the add-on with the name \"{bl_info.get('category')}:"
+                f" {bl_info.get('name')}\""
+            ),
             f"    under the {bl_info.get('support').title()} tab and enable it.",
             f'3. Under "Preferences", click on the "{SolventInstallPackages.bl_label}"',
             f"    button. This will download and install the required packages,",
             f"    if Blender has the required permissions.",
-            f"4. After the installation has finished, you would need to restart Blender.",
+            (
+                f"4. After the installation has finished, you would need to restart"
+                f" Blender."
+            ),
             f"",
             f"If you are experiencing issues:",
             f"1. If you are on Windows, re-open Blender with administrator privileges.",
@@ -589,9 +662,10 @@ def register() -> None:
         current_blender_version = ".".join(str(i) for i in bpy.app.version)
         required_blender_version = ".".join(str(i) for i in bl_info["blender"])
         raise Exception(
-            f"This add-on doesn't support Blender version less than {required_blender_version}. "
-            f"Blender version {required_blender_version} or greater is recommended, "
-            f"but the current version is {current_blender_version}."
+            "This add-on doesn't support Blender version less than"
+            f" {required_blender_version}. Blender version"
+            f" {required_blender_version} or greater is recommended, but the current"
+            f" version is {current_blender_version}."
         )
 
     for cls in preparation_classes:

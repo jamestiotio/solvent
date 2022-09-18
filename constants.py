@@ -1,11 +1,12 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 
-import bpy
-from dataclasses import dataclass
 import os
 import platform
 import sys
-from typing import Optional, List
+from dataclasses import dataclass
+from typing import List, Optional
+
+import bpy
 
 CURRENT_PLATFORM = platform.system()
 CURRENT_SD_VERSION = "1.4"

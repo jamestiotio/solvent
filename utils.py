@@ -2,8 +2,9 @@
 
 import ctypes
 import os
-import solvent.constants as constants
 import subprocess
+
+import solvent.constants as constants
 
 
 def is_admin() -> bool:

@@ -1,20 +1,22 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 
+import gc
+import os
 from contextlib import nullcontext
+from typing import List, Optional
+
+import torch
 from diffusers import (
-    StableDiffusionPipeline,
-    StableDiffusionImg2ImgPipeline,
-    StableDiffusionInpaintPipeline,
     DDIMScheduler,
     LMSDiscreteScheduler,
     PNDMScheduler,
+    StableDiffusionImg2ImgPipeline,
+    StableDiffusionInpaintPipeline,
+    StableDiffusionPipeline,
 )
-import gc
-import os
 from PIL import Image
+
 import solvent.constants as constants
-from typing import Optional, List
-import torch
 
 ddim_scheduler = DDIMScheduler(
     beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear"

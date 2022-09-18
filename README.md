@@ -6,7 +6,7 @@ AI-Assisted Texture Generation Toolkit in Blender
 - Text-to-Image Texture Generation
   - Generate textures, concept art, and background assets by using Stable Diffusion
   - Generate multiple texture images, all readily accessible in Blender
-  - Generate tileable textures
+  - Generate seamless and tileable textures
   - Experiment with various adjustable configuration parameters
   - Enable optimizations by default to save GPU VRAM and time taken for generation
 - Image-to-Image Texture Generation
@@ -77,6 +77,7 @@ On top of Blender's requirements specified [here](https://www.blender.org/downlo
 - [ ] Add image upscaler module.
 - [ ] Add material map generator module (normal map, displacement map, roughness map).
 - [ ] Add prompt engineering to assist beginners with experimenting with Stable Diffusion.
+- [ ] Store the history of prompts created by a particular user.
 - [ ] Implement asynchronous Python package downloading and texture generation to allow Blender to stay interactive during processing.
 - [ ] Add support to use MPS acceleration on M1 Mac once the [relevant PyTorch version](https://pytorch.org/blog/introducing-accelerated-pytorch-training-on-mac/) becomes stable.
 - [ ] Ensure cross-compatibility across Windows, Mac, and Linux.
